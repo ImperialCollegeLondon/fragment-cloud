@@ -1,0 +1,29 @@
+import os
+from setuptools import setup, find_packages, Extension
+
+sources = [os.path.join("src", filename)
+           for filename in os.listdir("src") if filename.endswith(".cpp")]
+print("sources =", sources)
+
+core = Extension(
+    'fcm.core',
+    sources=sources,
+    include_dirs=['include', '@Boost_INCLUDE_DIRS@'],
+    libraries=['@boost_python_lib_name@', '@boost_numpy_lib_name@'],
+    language='c++',
+    extra_compile_args=['-std=c++17']
+)
+
+packages = find_packages()
+print("packages =", packages)
+
+setup(
+    name='fragment-cloud',
+    version='0.2.1',
+    ext_modules=[core],
+    packages=packages,
+    package_data={
+        "fcm.atmosphere": ["*.csv"],
+    },
+    test_suite="tests.python"
+)

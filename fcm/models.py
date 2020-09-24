@@ -1,0 +1,98 @@
+__all__ = ["Fragment", "Timestepper", "CloudDispersionModel", "FragmentationModel", "GroundType",
+           "CrateringParams", "FcmResults"]
+
+from enum import Enum
+from collections import namedtuple
+
+
+###################################################
+Fragment = namedtuple(
+    "Fragment",
+    ['timeseries',  # (pd.DataFrame) index = t; columns = [x, y, z, h, v, r, angle, m, dedz]
+                    #    where  t =     time [s] since atmospheric entry
+                    #           x =     center x position [km],
+                    #           y =     center y position [km],
+                    #           z =     center height above sea level [km],
+                    #           v =     velocity [km/s],
+                    #           angle = tranjectory angle [deg] w.r.t. the ground (0 = horizontal, 90=vertical),
+                    #           r =     fragment radius [m] (perpendicular to trajectory),
+                    #           m =     fragment mass [kg],
+                    #           dedz =  energy deposited in atmosphere [kt TNT/km]
+                    #           ram pressure [kPa]
+     'strength',    # (float)               aerodynamic strength [kPa] of the fragment material
+     'id',          # (int)                 fragment ID
+     'parents',     # tuple(int) or None    IDs of parents from which fragment separated, if fragment is not the bulk
+     'children'],   # list(int) or None     list of child fragments if fragmentation event occurred
+    
+    defaults=[0,     # id
+              None,  # parents
+              None]  # children
+)
+
+
+###################################################
+class Timestepper(Enum):
+    forward_euler  = 'forward_euler'
+    improved_euler = 'improved_euler'
+    RK4            = 'RK4'      # 4th order explicit Runge-Kutta scheme
+    AB2            = 'AB2'      # 2nd order explicit multi-step Adams-Bashforth scheme
+
+
+###################################################
+class CloudDispersionModel(Enum):
+    PM  = "PM"      # Pancake Model
+                    #   by Chyba et al. (1993) [https://doi.org/10.1038/361040a0]
+                    
+    DCM = "DCM"     # Debris Cloud Model
+                    #   by Hills and Goda (1993) [https://doi.org/10.1086/116499]
+                    
+    CRM = "CRM"     # Chain Reaction Model
+                    #   by Avramenko et al. (2014) [https://doi.org/10.1002/2013JD021028]
+
+
+###################################################
+class FragmentationModel(Enum):
+    IW = "IW"   # Independent wakes model
+                #   by Passey and Melosh (1980) [https://doi.org/10.1016/0019-1035(80)90072-X]
+                
+    CW = "CW"   # Collective wake model
+                #   by ReVelle (2006) [https://doi.org/10.1017/S1743921307003122]
+                #   not implemented
+                
+    NCW = "NCW" # Non-collective wake model
+                #   also by ReVelle (2006)
+                #   not implemented
+
+
+###################################################
+class GroundType(Enum):
+    regolith = "regolith"
+    hard_soil = "hard_soil"
+    cohesionless_material = "cohesionless_material"
+    cohesive_soil = "cohesive_soil"
+
+
+###################################################
+CrateringParams = namedtuple(
+    "CrateringParams",
+    ['ground_density',              # Density of ground material where the impact happens, in [kg/m^3]
+     'ground_strength',             # Strenght of the ground material, in [kPa]
+     'rim_factor',                  # scaling factor for calculating rim-to-rim impact crater diameter
+     'K1', 'K2', 'Kr', 'mu', 'nu']  # coefficients in Holsapple crater radius equation
+)
+
+
+###################################################
+FcmResults = namedtuple(
+    "FcmResults",
+    ['craters',             # pandas.DataFrame(x, y, r) : x-pos in [m], y-pos in [m], radius in [m]
+                            #       representation of crater cluster
+     'energy_deposition',   # pandas.Series(index = altitiude [km], data = dEdz in kt TNT / km)
+                            #       sum of energy deposition of all fragments
+     'final_states',        # pandas.DataFrame(index = int(ID), columns = same as fcm.Fragment.timeseries)
+                            #       collection of states of all fragments just before
+                            #       a) impact, b) atmoshperic escape, c) break up, d) total ablation
+     'bulk',                # fcm.Fragment : time series of initial bulk
+     'fragments',           # dict(int(ID): fcm.Fragment) : time series of all fragments
+     'clouds']              # dict(int(ID): fcm.Fragment) : time series of all debris clouds
+)

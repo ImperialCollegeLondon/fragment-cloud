@@ -1,0 +1,13 @@
+build/
+debug/
+release/
+dist/
+.ipynb_checkpoints/
+setup.py
+
+__pycache__/
+*.egg-info/
+*.egg
+*.so
+
+.DS_Store
