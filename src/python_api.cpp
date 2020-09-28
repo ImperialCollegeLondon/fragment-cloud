@@ -44,7 +44,7 @@ PyStructuralGroup::PyStructuralGroup(
 
 py::list PyStructuralGroup::subfragment_mass_fractions() const {
     py::list result;
-    for (const auto frac : this->fragment_mass_fractions) {
+    for (const auto& frac : this->fragment_mass_fractions) {
         result.append(frac);
     }
     return result;
@@ -62,7 +62,7 @@ PyMeteoroid::PyMeteoroid(const double density, const double velocity, const doub
 
 py::list PyMeteoroid::groups() const {
     py::list result;
-    for (const auto group : this->structural_groups) {
+    for (const auto& group : this->structural_groups) {
         result.append(PyStructuralGroup(group));
     }
     return result;
@@ -181,7 +181,7 @@ py::tuple _final_states_array(
     std::vector<id_type> index_vec;
     index_vec.reserve(data.size());
     
-    for (const auto [info, timeseries] : data) {
+    for (const auto& [info, timeseries] : data) {
         data_vec.insert(data_vec.end(), timeseries.back().cbegin(), timeseries.back().cend());
         index_vec.push_back(info.id);
     }
