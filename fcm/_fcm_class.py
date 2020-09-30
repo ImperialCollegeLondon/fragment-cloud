@@ -1,6 +1,7 @@
 # main class interface
 __all__ = ["StructuralGroup", "FCMmeteoroid", "PancakeMeteoroid", "FragmentationMeteoroid",
-           "FCMparameters", "simulate_impact"]
+           "FCMparameters", "simulate_impact", "default_cratering_params",
+           "default_cloud_dispersion_coeff"]
 
 import math
 from collections.abc import Iterable
