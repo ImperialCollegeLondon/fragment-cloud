@@ -3,7 +3,15 @@
 Implementation of the fragment-cloud model (FCM) for meteoroid atmospheric entry modeling.
 The theoretical model is described in detail in Wheeler et al. (2018) [DOI:10.1016/j.icarus.2018.06.014](https://doi.org/10.1016/j.icarus.2018.06.014)
 
-We added the capability to compute the location and size of impact craters.
+We implemented the model as a C++ extension for Python and added a number of capabilities:
+
+* Computing the location of impact craters.
+* Calculating the size of impact craters with scaling laws by Holsapple (1987) [DOI:10.1016/0734-743X(87)90051-0](https://doi.org/10.1016/0734-743X(87)90051-0).
+* Calculating several characteristics of impact crater clusters, such as effective diameter, dispersion, aspect ratio (established in Daubar et al. (2019) [DOI:10.1029/2018JE005857](https://doi.org/10.1029/2018JE005857)).
+* Restricting the model to the separate fragments model (Passey and Melosh (1980) [DOI:10.1016/0019-1035(80)90072-X](https://doi.org/10.1016/0019-1035(80)90072-X) or one of the "pancake-type" models.
+* Choosing between all major "pancake-type" models: Chyba et al. (1993) [DOI:10.1038/361040a0](https://doi.org/10.1038/361040a0), Hills and Goda (1993) [DOI:10.1086/116499](https://doi.org/10.1086/116499), and Avramenko et al. (2014) [DOI:10.1002/2013JD021028](https://doi.org/10.1002/2013JD021028).
+* Using either the spherical or the flat planet approximation.
+* Built-in utility to retrieve air density values from the Mars Climate Database Web Interface [http://www-mars.lmd.jussieu.fr/mcd_python/](http://www-mars.lmd.jussieu.fr/mcd_python/)
 
 ## Installation
 
@@ -38,7 +46,7 @@ For the final step, there are a few different options:
 
 ## Documentation
 
-Sorry, no time for a separate documentation :( The docstrings are comprehensive though. Together with examples it should be clear what is going on. Docstrings are in `fcm/_fcm_class.py` and `fcm/models.py`. 
+Sorry, no time for a separate documentation :( The docstrings are comprehensive though. Together with examples it should be clear what is going on. Docstrings are in `fcm/_fcm_class.py` and `fcm/models.py`.
 
 ## Example usage
 
@@ -60,19 +68,16 @@ results = fcm.simulate_impact(parameters, impactor, h_start=100)
 
 # Visualise results
 import matplotlib.pyplot as plt
-from matplotlib.patches import Circle
+from fcm import crater_tools
 
-# 1. dE/dz
+## 1. dE/dz
 plt.plot(results.energy_deposition.to_numpy(), results.energy_deposition.index)
 plt.xscale('log')
 plt.xlabel('dE/dz (kt TNT/km)')
-plt.xlabel('z (km)')
+plt.ylabel('z (km)')
 plt.show()
 
-# 2. Crater cluster
-results.craters.plot.scatter('x', 'y')
-fig, ax = plt.subplots(1, 1)
-for row in craters.itertuples():
-    circle = Circle((row.y, row.x), row.r, color='black', fill=False)
-    ax.add_artist(circle)
+## 2. Crater cluster
+crater_tools.plot_craters(results.craters)
+plt.show()
 ```

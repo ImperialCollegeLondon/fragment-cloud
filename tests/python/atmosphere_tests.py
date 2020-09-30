@@ -24,7 +24,6 @@ def test_mars_atmosphere():
     assert (np.diff(atmosphere.to_numpy()) < 0).all()
 
 def test_mars_api():
-    
     timestamp = datetime.datetime(2020, 5, 16, 6, 33, 24)
     lat = -72.176
     long = -2.956
