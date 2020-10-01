@@ -448,7 +448,7 @@ BOOST_AUTO_TEST_CASE(multiple_fragments, * utf::tolerance(1e-8))
 
     for (const auto frac : mass_fractions) {
         BOOST_TEST((std::find_if(subfragments.cbegin(), subfragments.cend(),
-                                [&](const auto& sf){ return abs(sf.mass_fraction - frac) < 1e-8; })
+                                [&](const auto& sf){ return std::abs(sf.mass_fraction - frac) < 1e-8; })
                     != subfragments.cend()));
     }
 

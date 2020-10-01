@@ -47,7 +47,7 @@ double AtmosphericDensity::calc(const double h) const noexcept {
     // if (h_index == this->height_.size()) {
     //     return 0;
     // }
-    if (abs(h - this->height_[h_index]) < 1e-1) {
+    if (std::abs(h - this->height_[h_index]) < 1e-1) {
         return std::exp(this->log_rho_[h_index]);
     }
     const double t = (h - this->height_[h_index - 1]) /

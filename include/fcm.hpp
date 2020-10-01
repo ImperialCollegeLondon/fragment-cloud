@@ -13,6 +13,7 @@
 #include <tuple>
 #include <utility>
 #include <vector>
+#include <algorithm>
 
 namespace fcm {
 
@@ -43,7 +44,7 @@ struct StructuralGroup : public SubFragment {
             if (!std::is_sorted(fragment_mass_fractions.cbegin(), fragment_mass_fractions.cend())){
                 throw std::invalid_argument("fragment_mass_fractions must be sorted in ascending order");
             }
-            if (abs(std::accumulate(fragment_mass_fractions.cbegin(), fragment_mass_fractions.cend(), 1) - 1) > 1e-10) {
+            if (std::abs(std::accumulate(fragment_mass_fractions.cbegin(), fragment_mass_fractions.cend(), 1) - 1) > 1e-10) {
                 throw std::invalid_argument("sum of fragment_mass_fractions must equal 1");
             }
         }
@@ -70,7 +71,7 @@ struct Meteoroid {
         if (cloud_mass_frac < 0 || cloud_mass_frac > 1) {
             throw std::invalid_argument("frag_velocity_coeff must be in the interval [0, 1]");
         }
-        if (!structural_groups.empty() && abs(
+        if (!structural_groups.empty() && std::abs(
             std::accumulate(structural_groups.cbegin(), structural_groups.cend(), 0,
                             [](const double s, const auto& g){ return g.mass_fraction + s; }) - 1
         ) > 1e-10) {

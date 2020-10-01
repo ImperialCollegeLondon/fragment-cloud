@@ -35,7 +35,7 @@ PyStructuralGroup::PyStructuralGroup(
     this->cloud_mass_frac = cloud_mass_frac;
     if (cloud_mass_frac < 1) {
         if (strength_scaler <= 0) throw std::invalid_argument("strength_scaler must be > 0");
-        if (abs(std::accumulate(fragment_mass_fractions.cbegin(), fragment_mass_fractions.cend(), 1) - 1) > 1e-10) {
+        if (std::abs(std::accumulate(fragment_mass_fractions.cbegin(), fragment_mass_fractions.cend(), 1) - 1) > 1e-10) {
             throw std::invalid_argument("sum of fragment_mass_fractions must equal 1");
         }
         std::sort(this->fragment_mass_fractions.begin(), this->fragment_mass_fractions.end());
