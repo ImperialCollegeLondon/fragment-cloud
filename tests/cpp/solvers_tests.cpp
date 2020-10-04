@@ -38,7 +38,7 @@ NoRefStateT y_t(const function<NoRefStateT(StateT&&, const TimeT, const TimeT)>&
         t += dt;
     } while (t < t_end);
 
-    if (abs(1 - t/t_end) > 1e-10) {
+    if (std::abs(1 - t/t_end) > 1e-10) {
         y = step(forward<StateT>(y), t, t_end - t);
     }
 
@@ -55,7 +55,7 @@ NoRefStateT y_t(const function<NoRefStateT(StateT&&, const TimeT)>& step,
         t += dt;
     } while (t < t_end);
 
-    if (abs(1 - t/t_end) > 1e-10) {
+    if (std::abs(1 - t/t_end) > 1e-10) {
         y = step(forward<StateT>(y), t_end - t);
     }
 
@@ -74,7 +74,7 @@ NoRefStateT y_t(const function<tuple<NoRefStateT, DeltaT>(StateT&&, const DeltaT
         t += dt;
     } while (t < t_end);
 
-    if (abs(1 - t/t_end) > 1e-10) {
+    if (std::abs(1 - t/t_end) > 1e-10) {
         auto [y_next, df_next] = step(forward<StateT>(y), df_prev, t, t_end - t, dt);
         y = move(y_next);
     }
@@ -94,7 +94,7 @@ NoRefStateT y_t(const function<tuple<NoRefStateT, DeltaT>(StateT&&, const DeltaT
         t += dt;
     } while (t < t_end);
 
-    if (abs(1 - t/t_end) > 1e-10) {
+    if (std::abs(1 - t/t_end) > 1e-10) {
         auto [y_next, df_next] = step(forward<StateT>(y), df_prev, t_end - t, dt);
         y = move(y_next);
     }
@@ -117,7 +117,7 @@ NoRefStateT y_t_variable(
         t += dt * (1 + counter++ % 2);
     } while (t < t_end);
 
-    if (abs(1 - t/t_end) > 1e-10) {
+    if (std::abs(1 - t/t_end) > 1e-10) {
         auto [y_next, df_next] = step(forward<StateT>(y), df_prev, t, t_end - t, dt);
         y = move(y_next);
     }
@@ -140,7 +140,7 @@ NoRefStateT y_t_variable(
         t += dt * (1 + counter++ % 2);
     } while (t < t_end);
 
-    if (abs(1 - t/t_end) > 1e-10) {
+    if (std::abs(1 - t/t_end) > 1e-10) {
         auto [y_next, df_next] = step(forward<StateT>(y), df_prev, t_end - t, dt);
         y = move(y_next);
     }
@@ -200,7 +200,7 @@ BOOST_AUTO_TEST_CASE(forward_euler)
         y_move = y_t(solver_move, y0, t0, t_max, dt);
 
         BOOST_TEST(y == y_move, tt::tolerance(1e-10));
-        errors.push_back(abs(y - y_solution));
+        errors.push_back(std::abs(y - y_solution));
     }
 
     double err_log_diff;
@@ -234,7 +234,7 @@ BOOST_AUTO_TEST_CASE(improved_euler)
         y_move = y_t(solver_move, y0, t0, t_max, dt);
 
         BOOST_TEST(y == y_move, tt::tolerance(1e-10));
-        errors.push_back(abs(y - y_solution));
+        errors.push_back(std::abs(y - y_solution));
     }
 
     double err_log_diff;
@@ -268,7 +268,7 @@ BOOST_AUTO_TEST_CASE(RK4)
         y_move = y_t(solver_move, y0, t0, t_max, dt);
 
         BOOST_TEST(y == y_move, tt::tolerance(1e-10));
-        errors.push_back(abs(y - y_solution));
+        errors.push_back(std::abs(y - y_solution));
     }
 
     double err_log_diff;
@@ -306,13 +306,13 @@ BOOST_AUTO_TEST_CASE(AB2)
         y_move = y_t(solver_move, df_prev, y1, t0 + dt, t_max, dt);
 
         BOOST_TEST(y == y_move, tt::tolerance(1e-10));
-        errors.push_back(abs(y - y_solution));
+        errors.push_back(std::abs(y - y_solution));
 
         y_variable = y_t_variable<const double&>(solver, df_prev, y1, t0 + dt, t_max, dt);
         y_move_variable = y_t_variable(solver_move, df_prev, y1, t0 + dt, t_max, dt);
 
         BOOST_TEST(y_variable == y_move_variable, tt::tolerance(1e-10));
-        errors_variable.push_back(abs(y_variable - y_solution));
+        errors_variable.push_back(std::abs(y_variable - y_solution));
     }
 
     double err_log_diff, err_log_diff_variable;
@@ -396,7 +396,7 @@ BOOST_AUTO_TEST_CASE(forward_euler)
 
         BOOST_TEST(y.x == y_move.x, tt::tolerance(1e-10));
         BOOST_TEST(y.y == y_move.y, tt::tolerance(1e-10));
-        errors.push_back(abs(y - y_solution));
+        errors.push_back(std::abs(y - y_solution));
     }
 
     double err_log_diff;
@@ -428,7 +428,7 @@ BOOST_AUTO_TEST_CASE(improved_euler)
 
         BOOST_TEST(y.x == y_move.x, tt::tolerance(1e-10));
         BOOST_TEST(y.y == y_move.y, tt::tolerance(1e-10));
-        errors.push_back(abs(y - y_solution));
+        errors.push_back(std::abs(y - y_solution));
     }
 
     double err_log_diff;
@@ -460,7 +460,7 @@ BOOST_AUTO_TEST_CASE(RK4)
 
         BOOST_TEST(y.x == y_move.x, tt::tolerance(1e-10));
         BOOST_TEST(y.y == y_move.y, tt::tolerance(1e-10));
-        errors.push_back(abs(y - y_solution));
+        errors.push_back(std::abs(y - y_solution));
     }
 
     double err_log_diff;
@@ -499,14 +499,14 @@ BOOST_AUTO_TEST_CASE(AB2)
 
         BOOST_TEST(y.x == y_move.x, tt::tolerance(1e-10));
         BOOST_TEST(y.y == y_move.y, tt::tolerance(1e-10));
-        errors.push_back(abs(y - y_solution));
+        errors.push_back(std::abs(y - y_solution));
 
         y_variable = y_t_variable<const State&>(solver, df_prev, y1, t0 + dt, t_max, dt);
         y_move_variable = y_t_variable(solver_move, df_prev, y1, t0 + dt, t_max, dt);
 
         BOOST_TEST(y_variable.x == y_move_variable.x, tt::tolerance(1e-10));
         BOOST_TEST(y_variable.y == y_move_variable.y, tt::tolerance(1e-10));
-        errors_variable.push_back(abs(y_variable - y_solution));
+        errors_variable.push_back(std::abs(y_variable - y_solution));
     }
 
     double err_log_diff, err_log_diff_variable;

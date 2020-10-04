@@ -159,7 +159,7 @@ private:
     /**
      * @brief Kinetic + gravitational energy of fragment
      */
-    constexpr auto E() const noexcept {
+    auto E() const noexcept {
         if (!this->settings_->flat_planet) {
             return energy(this->state_.dm, this->state_.dv, this->state_.dz, this->params_->g0,
                           this->params_->Rp);
@@ -310,17 +310,17 @@ public:
      * 
      * So at this height, the air density is best approximated by rho(z) = rho(z1) * exp(-(z-z1) / H)
      */
-    constexpr auto scale_height() const noexcept { return this->rho_a_->scale_height(this->z()); }
+    inline auto scale_height() const noexcept { return this->rho_a_->scale_height(this->z()); }
     
     /**
      * @brief air density density at current elevation z, in [kg/m^3]
      */
-    constexpr auto air_density() const noexcept { return this->rho_a_->calc(this->z()); }
+    inline auto air_density() const noexcept { return this->rho_a_->calc(this->z()); }
     
     /**
      * @brief ram pressure, in [Pa]
      */
-    constexpr auto rp() const noexcept { return ram_pressure(this->air_density(), this->velocity()); }
+    inline auto rp() const noexcept { return ram_pressure(this->air_density(), this->velocity()); }
     
     /**
      * @brief kinetic energy, in [J]
@@ -335,7 +335,7 @@ public:
     /**
      * @brief data point for time series to be returned to python
      */
-    constexpr auto data() const noexcept {
+    inline auto data() const noexcept {
         return std::array<double, data_size> {
             this->t_, this->mass(), this->velocity(), this->state_.dtheta, this->z(),
             this->state_.dx, this->state_.dy, this->radius(), this->cloud_density(), this->dEdz(),

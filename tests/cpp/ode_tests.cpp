@@ -21,12 +21,12 @@ BOOST_AUTO_TEST_CASE(square_cube, * utf::tolerance(1e-8))
     const double la = -2.5;
     BOOST_TEST_REQUIRE(std::square(l) == l*l);
     BOOST_TEST_REQUIRE(std::square(l) == std::pow(l, 2));
-    BOOST_TEST_REQUIRE(std::square(la) == abs(la)*abs(la));
+    BOOST_TEST_REQUIRE(std::square(la) == std::abs(la)*std::abs(la));
     BOOST_TEST_REQUIRE(std::square(la) == std::pow(la, 2));
 
     BOOST_TEST_REQUIRE(std::cube(l) == l*l*l);
     BOOST_TEST_REQUIRE(std::cube(l) == std::pow(l, 3));
-    BOOST_TEST_REQUIRE(std::cube(la) == la*abs(la)*abs(la));
+    BOOST_TEST_REQUIRE(std::cube(la) == la*std::abs(la)*std::abs(la));
     BOOST_TEST_REQUIRE(std::cube(la) == std::pow(la, 3));
 }
 

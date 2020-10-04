@@ -52,7 +52,7 @@ auto test_params(const std::shared_ptr<const fcm::FCM_settings>& settings, const
     auto structural_group = cloud_frac < 1 ? std::list<fcm::StructuralGroup> {
         fcm::StructuralGroup(1, 1, strength, density, cloud_frac, 0.25, std::vector<double>{0.4, 0.6})
     } : std::list<fcm::StructuralGroup> {};
-    const fcm::Meteoroid m(density, 10e3, radius, abs(theta), strength, cloud_frac,
+    const fcm::Meteoroid m(density, 10e3, radius, std::abs(theta), strength, cloud_frac,
                            std::move(structural_group));
     // Fragment ctor
     const fcm::Fragment f(m.mass(), m.velocity, m.radius, theta, 20e3, m.strength, m.cloud_mass_frac,

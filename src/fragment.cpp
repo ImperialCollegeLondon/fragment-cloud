@@ -63,15 +63,15 @@ Fragment::Fragment(double mass, double velocity, double radius, double theta, do
     assert(0 <= cloud_mass_frac <= 1);
     assert(-1 <= cos_phi && cos_phi <= 1);
     assert(-1 <= sin_phi && sin_phi <= 1);
-    assert(abs(std::hypot(cos_phi, sin_phi) - 1) < 1e-10);
+    assert(std::abs(std::hypot(cos_phi, sin_phi) - 1) < 1e-10);
     assert(init_density > 0);
-    // assert(is_cloud || abs(1 - init_density / sphere_rho(mass, radius)) < 1e-10);
+    // assert(is_cloud || std::abs(1 - init_density / sphere_rho(mass, radius)) < 1e-10);
 
     inner_structure.sort([](const auto& a, const auto& b){
         return a.mass_fraction > b.mass_fraction;
     });
     if (!inner_structure.empty()) {
-        assert(1e-10 > abs(1 - std::accumulate(
+        assert(1e-10 > std::abs(1 - std::accumulate(
             inner_structure.cbegin(), inner_structure.cend(), 0.0,
             [](const double s, const auto& g){ return g.mass_fraction + s; }
         )));
@@ -142,7 +142,7 @@ Fragment Fragment::split_subfragment(const SubFragment& subfragment,
         frac_sum += frac_final;
         factor *= (1 - subfragment.fragment_mass_fractions[i]) / (1 - frac_random);
     }
-    assert(abs(frac_sum - 1) < 1e-10);
+    assert(std::abs(frac_sum - 1) < 1e-10);
 
     // Fragment ctor
     Fragment new_fragment(
@@ -201,7 +201,7 @@ std::list<Fragment> Fragment::break_apart() {
 }
 
 inline auto _relative_error(const Fragment& frag) {
-    return abs(1.0 - frag.rp() / frag.strength());
+    return std::abs(1.0 - frag.rp() / frag.strength());
 }
 
 void Fragment::backtrack_strength(double tolerance, unsigned short max_iterations) {
@@ -219,7 +219,7 @@ void Fragment::backtrack_strength(double tolerance, unsigned short max_iteration
             // std::cerr << "Warning: Back-tracking to get fragment.rp() close to "
             //             << "fragment.strength() is diverging. Stopped after " << count
             //             << " iterations. Relative error = " << std::setprecision(3)
-            //             << 100 * abs(1 - this->rp() / this->strength()) << "%" << std::endl;
+            //             << 100 * std::abs(1 - this->rp() / this->strength()) << "%" << std::endl;
             break;
         }
         relative_error = new_relative_error;
@@ -228,7 +228,7 @@ void Fragment::backtrack_strength(double tolerance, unsigned short max_iteration
             std::cerr << "Warning: Back-tracking to get fragment.rp() close to"
                         << "fragment.strength() did not converge. Stopped after 10 iterations."
                         << " Relative error = " << std::setprecision(3)
-                        << 100 * abs(1 - this->rp() / this->strength()) << "%" << std::endl;
+                        << 100 * std::abs(1 - this->rp() / this->strength()) << "%" << std::endl;
             break;
         }
     }
