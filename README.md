@@ -84,7 +84,7 @@ plt.show()
 ## The Model
 
 A meteoroid is modeled as a homogenous sphere, deescribed by the following parameters:
-mass $m$, velocity $v$, radius $r$, strength $\sigma$. If the Wheeler et al. (2018) model is used,
+mass <img src="https://render.githubusercontent.com/render/math?math=m">, velocity <img src="https://render.githubusercontent.com/render/math?math=v">, radius <img src="https://render.githubusercontent.com/render/math?math=r">, strength <img src="https://render.githubusercontent.com/render/math?math=\sigma">. If the Wheeler et al. (2018) model is used,
 the meteoroid also has an inner structure as described in the paper, which only has an impact during break up.
 Before and after, it is still modeled as a homogeneous sphere.
 
@@ -104,34 +104,31 @@ Lateral view (from Passey and Melosh, 1980) | Bird's eye view
 :--: | :--:
 ![(lateral view)](doc/figures/vertical_perspective.png) | ![(bird's eye view)](doc/figures/top_down_perspective.jpg)
 
-$x$ is the downrange distance from the point of atmospheric entry, projected onto the planetary surface.
-$z$ is the height above standard 0, and $y$ expresses the deviation from the original straight downrange path after meteoroid break up.
-$\theta$ is the angle relative to the horizon at the current position $x$ and $y$ on the surface. $\phi$ is the trajectory angle projected on the $xy$-plane.
+<img src="https://render.githubusercontent.com/render/math?math=x"> is the downrange distance from the point of atmospheric entry, projected onto the planetary surface.
+<img src="https://render.githubusercontent.com/render/math?math=z"> is the height above standard 0, and <img src="https://render.githubusercontent.com/render/math?math=y"> expresses the deviation from the original straight downrange path after meteoroid break up.
+<img src="https://render.githubusercontent.com/render/math?math=\theta"> is the angle relative to the horizon at the current position $x$ and $y$ on the surface. $\phi$ is the trajectory angle projected on the $xy$-plane.
 
 Using these coordinates, the meteoroid physics equations are:
 
-* $\frac{dv}{dt} = -\frac{C_D \rho_a v^2 \pi r^2}{2m} + g\sin(\theta)$
-* $\frac{dm}{dt} = -\frac{C_\mathrm{ab}}{2}\rho_a v^3 \pi r^2$
-* $\frac{d\theta}{dt} = \frac{g\cos(\theta)}{v} - \frac{C_L \rho_a \pi r^2 v}{2m} - \frac{v\cos(\theta)}{R_p + z}$
-* $\frac{dz}{dt} = -v\sin(\theta)$
-* $\frac{dx}{dt} = v\cos(\theta)\cos(\phi)\frac{R_p}{R_p + z}$
-* $\frac{dy}{dt} = v\cos(\theta)\sin(\phi)\frac{R_p}{R_p + z}$
-* $\frac{d\phi}{dt} = 0$
+* <img src="https://render.githubusercontent.com/render/math?math=\frac{dv}{dt}=-\frac{C_D\rho_av^2\pir^2}{2m}%2Bg\sin(\theta)">
+* <img src="https://render.githubusercontent.com/render/math?math=\frac{dm}{dt}=-\frac{C_\mathrm{ab}}{2}\rho_av^3\pir^2">
+* <img src="https://render.githubusercontent.com/render/math?math=\frac{d\theta}{dt}=\frac{g\cos(\theta)}{v}-\frac{C_L\rho_a\pi%20r^2v}{2m}-\frac{v\cos(\theta)}{R_p%2Bz}">
+* <img src="https://render.githubusercontent.com/render/math?math=\frac{dz}{dt}=-v\sin(\theta)">
+* <img src="https://render.githubusercontent.com/render/math?math=\frac{dx}{dt} = v\cos(\theta)\cos(\phi)\frac{R_p}{R_p%2Bz}">
+* <img src="https://render.githubusercontent.com/render/math?math=\frac{dy}{dt}=v\cos(\theta)\sin(\phi)\frac{R_p}{R_p%2Bz}">
+* <img src="https://render.githubusercontent.com/render/math?math=\frac{d\phi}{dt}=0">
 
-$\rho_a$ is the air density, $g$ the gravitational accelecation, $C_D$, $C_\mathrm{ab}$, $C_L$ are the coefficients of drag, ablation and lift respectively. $R_p$ is the planet's radius.
+<img src="https://render.githubusercontent.com/render/math?math=\rho_a"> is the air density, <img src="https://render.githubusercontent.com/render/math?math=g"> the gravitational accelecation, <img src="https://render.githubusercontent.com/render/math?math=C_D\,,\%20C_\mathrm{ab}\,,\%20C_L\,"> are the coefficients of drag, ablation and lift respectively. <img src="https://render.githubusercontent.com/render/math?math=R_p"> is the planet's radius.
 
 ### Break Up
 
-When the ram pressure $(\rho_a \cdot v^2)$ exceeds the meteoroid's strength, it breaks up into pieces.
+When the ram pressure <img src="https://render.githubusercontent.com/render/math?math=(\rho_a\cdot%20v^2)"> exceeds the meteoroid's strength, it breaks up into pieces.
 There are multiple ways to model the break up process.
 This library provides the three major ones, the separate fragments approach, the debris cloud approach, and the fragment-cloud approach, which is a combination of the two.
-The following figure from Wheeler et al. (2018) summarizes them:
-
-![(Wheeler diagram)](doc/figures/wheeler_diagram.jpg)
 
 #### Separate fragments model
 
-(Only the left side in the diagram) On break up, the meteoroid splits into a small number of fragments (some may be smaller, some larger), which then descend further into the atmosphere under separate bow shocks.
+On break up, the meteoroid splits into a small number of fragments (some may be smaller, some larger), which then descend further into the atmosphere under separate bow shocks.
 
 The following illustration from Passey and Melosh (1980) shows how exactly it works:
 
@@ -140,18 +137,18 @@ schematic | description
 ![(schematic)](doc/figures/fragment_sep_1.png) | ![(description)](doc/figures/fragment_sep_2.png)
 
 The transverse velocity is calculated like
-$V_T = V_i\sqrt{\frac{3}{2}C\frac{R_2}{R_1}\frac{\rho_a}{\rho_f}}$
-($\rho_f$ is the meteoroid density) and added perpendicularly to $V_i$ to both new fragments, while preserving momentum. The direction in the plane perpendicular to $V_i$ is chosen randomly. $C$ is a constant; $C\sim 1$, $C \in [0.02, 1.52]$ (Passey and Melosh, 1980), $\frac{3}{2}C\approx 0.19$ (Artemieva and Shuvalov (2001) [DOI:10.1029/2000JE001264](https://doi.org/10.1029/2000JE001264)).
+<img src="https://render.githubusercontent.com/render/math?math=V_T=V_i\sqrt{\frac{3}{2}C\frac{R_2}{R_1}\frac{\rho_a}{\rho_f}}">
+(<img src="https://render.githubusercontent.com/render/math?math=\rho_f"> is the meteoroid density) and added perpendicularly to <img src="https://render.githubusercontent.com/render/math?math=V_i"> to both new fragments, while preserving momentum. The direction in the plane perpendicular to <img src="https://render.githubusercontent.com/render/math?math=V_i"> is chosen randomly. <img src="https://render.githubusercontent.com/render/math?math=C"> is a constant; <img src="https://render.githubusercontent.com/render/math?math=C\sim%201\,,\%20C\in[0.02,1.52]"> (Passey and Melosh, 1980), <img src="https://render.githubusercontent.com/render/math?math=\frac{3}{2}C\approx0.19"> (Artemieva and Shuvalov, 2001, [DOI:10.1029/2000JE001264](https://doi.org/10.1029/2000JE001264)).
 
-The mass ratio of the new fragments (and therefore $R_1$ and $R_2$ are set by the user as an input. Further, a random range can be specified, e.g. (50/50 to 80/20).
+The mass ratio of the new fragments (and therefore <img src="https://render.githubusercontent.com/render/math?math=R_1"> and <img src="https://render.githubusercontent.com/render/math?math=R_2"> are set by the user as an input. Further, a random range can be specified, e.g. (50/50 to 80/20).
 
-Finally, a new strength is calculated for the two fragments. Following the suggestion in Artemieva and Shuvalov (2001), we scale the strength like $\sigma_f = \sigma_b \left(\frac{R_b}{R_f}\right)^\alpha \cdot 10^x$, where $x$ is a chosen from a random normal distribution around 0, with a user-defined standard deviation (default 0). $\alpha > 0$ is a constant, defined by the user. This relationship increases strength for smaller fragments, while also providing some randomness.
+Finally, a new strength is calculated for the two fragments. Following the suggestion in Artemieva and Shuvalov (2001), we scale the strength like <img src="https://render.githubusercontent.com/render/math?math=\sigma_f=\sigma_b\left(\frac{R_b}{R_f}\right)^\alpha\cdot10^x">, where <img src="https://render.githubusercontent.com/render/math?math=x"> is a chosen from a random normal distribution around 0, with a user-defined standard deviation (default 0). <img src="https://render.githubusercontent.com/render/math?math=\alpha>0"> is a constant, defined by the user. This relationship increases strength for smaller fragments, while also providing some randomness.
 
 The simulation stops once the fragment would produce a crater that is too small to be detected.
 
 #### Debris cloud model
 
-(Only the right side of the diagram) The meteoroid splits into thousands of fragments which all continue descending under a common bow shock, and can therefore be simulated as a common entity, describing a cloud of small debris pieces that expands and ablates. The model provides three cloud models of this class:
+The meteoroid splits into thousands of fragments which all continue descending under a common bow shock, and can therefore be simulated as a common entity, describing a cloud of small debris pieces that expands and ablates. The model provides three cloud models of this class:
 
 ![(cloud models)](doc/figures/cloud_models.png)
 
@@ -159,11 +156,13 @@ The image is from McMullan and Collins (2019) [DOI:10.1016/j.icarus.2019.02.013]
 
 The simulation stops once the debris cloud has lost 99.99% of its original kinetic energy.
 
-#### Fragment-cloud
+#### Fragment-cloud model
 
-Both things happen: A few large pieces separate and form individual bow shocks, the rest is described with a debris cloud model.
+Both things happen: A few large pieces separate and form individual bow shocks, the rest is described with a debris cloud model. Furthermore, the meteoroid can be modeled as a rubble pile with an inner structure. On the first break up, these components of the inner structure, called structure groups, separate and descend under separate bow shocks.
 
-Furthermore, the meteoroid can be modeled as a rubble pile with an inner structure. On the first break up, these components of the inner structure, called structure groups, separate and descend under separate bow shocks.
+The following figure from Wheeler et al. (2018) summarizes them:
+
+![(Wheeler diagram)](doc/figures/wheeler_diagram.jpg)
 
 Example of inner structure definition from Wheeler et al. (2018):
 
