@@ -97,8 +97,6 @@ std::pair<
 struct Crater {
     double x, y, r;
     std::list<id_type> fragment_ids;
-
-    constexpr auto r3() const noexcept { return r*r*r; };
 };
 
 std::list<Crater> calculate_craters(
