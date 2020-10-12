@@ -83,7 +83,7 @@ plt.show()
 
 ## The Model
 
-A meteoroid is modeled as a homogenous sphere, deescribed by the following parameters:
+A meteoroid is modeled as a homogenous sphere, described by the following parameters:
 mass <img src="https://render.githubusercontent.com/render/math?math=m">, velocity <img src="https://render.githubusercontent.com/render/math?math=v">, radius <img src="https://render.githubusercontent.com/render/math?math=r">, strength <img src="https://render.githubusercontent.com/render/math?math=\sigma">. If the Wheeler et al. (2018) model is used,
 the meteoroid also has an inner structure as described in the paper, which only has an impact during break up.
 Before and after, it is still modeled as a homogeneous sphere.
@@ -106,7 +106,7 @@ Lateral view (from Passey and Melosh, 1980) | Bird's eye view
 
 <img src="https://render.githubusercontent.com/render/math?math=x"> is the downrange distance from the point of atmospheric entry, projected onto the planetary surface.
 <img src="https://render.githubusercontent.com/render/math?math=z"> is the height above standard 0, and <img src="https://render.githubusercontent.com/render/math?math=y"> expresses the deviation from the original straight downrange path after meteoroid break up.
-<img src="https://render.githubusercontent.com/render/math?math=\theta"> is the angle relative to the horizon at the current position $x$ and $y$ on the surface. $\phi$ is the trajectory angle projected on the $xy$-plane.
+<img src="https://render.githubusercontent.com/render/math?math=\theta"> is the angle relative to the horizon at the current position <img src="https://render.githubusercontent.com/render/math?math=x"> and <img src="https://render.githubusercontent.com/render/math?math=y"> on the surface. <img src="https://render.githubusercontent.com/render/math?math=\phi"> is the trajectory angle projected on the <img src="https://render.githubusercontent.com/render/math?math=xy">-plane.
 
 Using these coordinates, the meteoroid physics equations are:
 
