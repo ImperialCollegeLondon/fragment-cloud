@@ -1,4 +1,4 @@
-# wraps the C++ functions
+"""wraps the C++ functions"""
 
 import math
 import numpy as np
@@ -110,7 +110,7 @@ def run_simulation(model, meteoroid, h_start, h_ground, craters=True, final_stat
     
     craters_tuple, dEdz_data, final_states_tuple, data = core.solve_impact(
         core_m, h_start*1e3, h_ground*1e3, params, settings, model.atmospheric_density[0] * 1e3,
-        model.atmospheric_density[1], int(seed), craters, dedz, final_states, timeseries
+        model.atmospheric_density[1], int(seed), craters, dedz, final_states
     )
     
     if craters and craters_tuple[0].size > 0:

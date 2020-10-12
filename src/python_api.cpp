@@ -192,7 +192,7 @@ py::tuple _final_states_array(
 py::tuple fcm::solve_impact(const PyMeteoroid& impactor, double z_start, double z_ground,
                             const FCM_params& params, const FCM_settings& settings,
                             const np::ndarray& height, const np::ndarray& density, id_type seed,
-                            bool craters, bool dedz, bool final_states, bool timeseries) {
+                            bool craters, bool dedz, bool final_states) {
 
     const auto rho_a = _rho_a_from_np(height, density);
 
@@ -207,7 +207,7 @@ py::tuple fcm::solve_impact(const PyMeteoroid& impactor, double z_start, double 
             fragment_data.append(py::make_tuple(info, vector_to_np(vec, shape)));
         }
     }
-    const auto craters_tuple = craters ? _craters_arrays(craters_list, settings.record_data)
+    const auto craters_tuple = craters ? _craters_arrays(craters_list, final_states || settings.record_data)
                                        : py::object();
     const auto final_states_tuple = final_states ? _final_states_array(data)
                                                  : py::object();

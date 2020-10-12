@@ -126,7 +126,7 @@ struct PyMeteoroid : public Meteoroid {
 py::tuple solve_impact(const PyMeteoroid& impactor, double z_start, double z_ground,
                        const FCM_params& params, const FCM_settings& settings,
                        const np::ndarray& height, const np::ndarray& density,
-                       id_type seed, bool craters, bool dedz, bool final_states, bool timeseries);
+                       id_type seed, bool craters, bool dedz, bool final_states);
 
 } // namespace fcm
 
