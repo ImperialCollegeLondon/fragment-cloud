@@ -29,10 +29,10 @@ def chelyabinsk_meteoroid(atmosphere, precision=1e-2):
     ]
     meteoroid = fcm.FCMmeteoroid(19.16, 18.3, 2.5e3, 19.8/2, 600, 0, groups)
     
-    simulation = fcm.FragmentCloudModel(9.81, 6371, atmosphere, ablation_coeff=7e-9,
-                                        cloud_disp_coeff=1.8/3.5, strengh_scaling_disp=0,
-                                        fragment_mass_disp=0, precision=precision)
-    return meteoroid, simulation
+    parameters = fcm.FCMparameters(9.81, 6371, atmosphere, ablation_coeff=7e-9,
+                                   cloud_disp_coeff=1.8/3.5, strengh_scaling_disp=0,
+                                   fragment_mass_disp=0, precision=precision)
+    return meteoroid, parameters
 
 
 ###################################################
@@ -44,10 +44,10 @@ def kosice_meteoroid(atmosphere, precision=1e-2):
     
     meteoroid = fcm.FCMmeteoroid(15, 60, 2.5e3, 1.388/2, 2, 0, groups)
     
-    simulation = fcm.FragmentCloudModel(9.81, 6371, atmosphere, ablation_coeff=1e-8,
-                                        cloud_disp_coeff=2/3.5, strengh_scaling_disp=0,
-                                        fragment_mass_disp=0, precision=precision)
-    return meteoroid, simulation
+    parameters = fcm.FCMparameters(9.81, 6371, atmosphere, ablation_coeff=1e-8,
+                                   cloud_disp_coeff=2/3.5, strengh_scaling_disp=0,
+                                   fragment_mass_disp=0, precision=precision)
+    return meteoroid, parameters
 
 
 ###################################################
@@ -70,10 +70,10 @@ def benesov_meteoroid(atmosphere, precision=1e-2):
     
     meteoroid = fcm.FCMmeteoroid(21.5, 81, 3.2e3, 1.348/2, 20, 0, groups)
     
-    simulation = fcm.FragmentCloudModel(9.81, 6371, atmosphere, ablation_coeff=1e-8,
-                                        cloud_disp_coeff=2/3.5, strengh_scaling_disp=0,
-                                        fragment_mass_disp=0, precision=precision)
-    return meteoroid, simulation
+    parameters = fcm.FCMparameters(9.81, 6371, atmosphere, ablation_coeff=1e-8,
+                                   cloud_disp_coeff=2/3.5, strengh_scaling_disp=0,
+                                   fragment_mass_disp=0, precision=precision)
+    return meteoroid, parameters
 
 
 ###################################################
@@ -96,10 +96,10 @@ def tagish_lake_meteoroid(atmosphere, precision=1e-2):
     
     meteoroid = fcm.FCMmeteoroid(15.8, 17.8, 1.64e3, 4.5/2, 0.5, 0, groups)
     
-    simulation = fcm.FragmentCloudModel(9.81, 6371, atmosphere, ablation_coeff=1e-8,
-                                        cloud_disp_coeff=1/3.5, strengh_scaling_disp=0,
-                                        fragment_mass_disp=0, precision=precision)
-    return meteoroid, simulation
+    parameters = fcm.FCMparameters(9.81, 6371, atmosphere, ablation_coeff=1e-8,
+                                   cloud_disp_coeff=1/3.5, strengh_scaling_disp=0,
+                                   fragment_mass_disp=0, precision=precision)
+    return meteoroid, parameters
 
 
 ###################################################
@@ -145,14 +145,14 @@ if __name__ == "__main__":
     plt.show()
     
     rho_a = atm.US_standard_atmosphere()
-    impactor, sim = evt(rho_a, 1e-4)
-    sim.simulate_impact(impactor, 100, craters=False, dedz=True, final_states=True)
+    impactor, params = evt(rho_a, 1e-4)
+    results = fcm.simulate_impact(params, impactor, 100, craters=False, dedz=True, final_states=True)
     
-    mask = np.logical_and(sim.results.energy_deposition.index.to_numpy() >= obs.index.min(),
-                          sim.results.energy_deposition.index.to_numpy() <= obs.index.max())
+    mask = np.logical_and(results.energy_deposition.index.to_numpy() >= obs.index.min(),
+                          results.energy_deposition.index.to_numpy() <= obs.index.max())
     
-    plt.plot(sim.results.energy_deposition.to_numpy()[mask],
-             sim.results.energy_deposition.index.to_numpy()[mask], label='fcm')
+    plt.plot(results.energy_deposition.to_numpy()[mask],
+             results.energy_deposition.index.to_numpy()[mask], label='fcm')
     plt.plot(obs['min. dEdz [kt TNT / km]'].to_numpy(), obs.index.to_numpy(), "--", label='observation (min)')
     plt.plot(obs['max. dEdz [kt TNT / km]'].to_numpy(), obs.index.to_numpy(), "--", label='observation (max)')
     
