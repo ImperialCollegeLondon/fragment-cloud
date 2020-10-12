@@ -476,10 +476,10 @@ std::list<Crater> fcm::calculate_craters(
 
         for (auto it = craters.begin(); it != craters.cend(); it++) {
             auto it2 = it;
-            while (++it2 != craters.end() && it2->x - it->x < r_max + it->r) {
-                if (_dist(*it, *it2) < it2->r + it->r) {
-                    const auto r1cubed = it->r3();
-                    const auto r2cubed = it2->r3();
+            while (++it2 != craters.end() && it2->x - it->x < r_max) {
+                if (_dist(*it, *it2) < std::max(it2->r, it->r)) {
+                    const auto r1cubed = std::cube(it->r);
+                    const auto r2cubed = std::cube(it2->r);
                     it->x = _mean_coordinate(it->x, r1cubed, it2->x, r2cubed);
                     it->y = _mean_coordinate(it->y, r1cubed, it2->y, r2cubed);
                     it->r = std::cbrt(r1cubed + r2cubed);
