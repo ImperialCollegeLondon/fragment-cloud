@@ -9,6 +9,7 @@ from sklearn.utils import resample
 from fcm._fcm_class import _check_number
 
 
+###################################################
 def plot_craters(craters, crater_color="black", ellipse_color=None, figsize=None):
     """Make a matplotlib plot of a crater cluster.
     Optionally computes and plots best-fit ellipse around cluster
@@ -74,6 +75,7 @@ def plot_craters(craters, crater_color="black", ellipse_color=None, figsize=None
     return fig
 
 
+###################################################
 def effective_diameter(radii):
     """Calculate effective diameter of a crater cluster
     
@@ -95,6 +97,7 @@ def effective_diameter(radii):
     return 2 * np.cbrt((radii**3).sum(axis=-1))
 
 
+###################################################
 def ellipse(craters, min_craters=5, bootstrap_samples=80, seed=74527):
     """Calculate best-fit ellipse around crater cluster with PCA,
     if cluster has at least min_craters.
@@ -189,6 +192,7 @@ def ellipse(craters, min_craters=5, bootstrap_samples=80, seed=74527):
     return aspect, center, components
 
 
+###################################################
 def dispersion(craters):
     """Calculate pairwise distane of crater centers
     
@@ -211,6 +215,7 @@ def dispersion(craters):
     return distances
     
 
+###################################################
 def n_larger_D_max_frac(radii, frac=0.25):
     """Count the number of craters in a cluster that are larger than
     a fraction of the size of the largest crater in the cluster
@@ -239,6 +244,7 @@ def n_larger_D_max_frac(radii, frac=0.25):
     return (radii > comp*frac).sum(axis=-1)
     
 
+###################################################
 def f_larger_D_max_frac(radii, frac=0.25):
     """Compute the fraction of craters in a cluster that are larger than
     a fraction of the size of the largest crater in the cluster
@@ -267,6 +273,7 @@ def f_larger_D_max_frac(radii, frac=0.25):
     return (radii > comp*frac).mean(axis=-1)
 
 
+###################################################
 def lon_lat_to_meters(craters, Rp):
     """Convert crater cluster with crater coordinates in (latitude, longitude), in degrees,
     to meters distance from the cluster center

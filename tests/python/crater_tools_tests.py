@@ -119,4 +119,4 @@ if __name__ == "__main__":
     test_ellipse()
     test_f_n_larger_d_max_frac()
     test_lon_lat_to_meters()
-    # convergence_analysis_ellipse()
+    convergence_analysis_ellipse()

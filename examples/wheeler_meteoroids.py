@@ -1,6 +1,8 @@
 import os, sys
 THIS_DIR = os.path.abspath(os.path.dirname(__file__))
-sys.path.append(os.path.join(THIS_DIR, ".."))
+BASE_PATH = os.path.abspath(os.path.join(THIS_DIR, ".."))
+if sys.path[0] != BASE_PATH:
+    sys.path.insert(0, BASE_PATH)
 
 import fcm
 import fcm.atmosphere as atm
