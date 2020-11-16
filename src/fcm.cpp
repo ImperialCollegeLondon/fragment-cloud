@@ -477,7 +477,7 @@ std::list<Crater> fcm::calculate_craters(
         for (auto it = craters.begin(); it != craters.cend(); it++) {
             auto it2 = it;
             while (++it2 != craters.end() && it2->x - it->x < r_max + it->r) {
-                if (_dist(*it, *it2) < it2->r + it->r) {
+                if (_dist(*it, *it2) < 0.75 * std::max(it2->r, it->r) + 0.25*(it->r + it2->r)) {
                     const auto r1cubed = std::cube(it->r);
                     const auto r2cubed = std::cube(it2->r);
                     it->x = _mean_coordinate(it->x, r1cubed, it2->x, r2cubed);
