@@ -184,7 +184,7 @@ BOOST_AUTO_TEST_CASE(solveImpact)
     const auto d_array = vector_to_np(d);
 
     const auto result = fcm::solve_impact(m, 70e3, 10e3, p, s, h_array, d_array, 0,
-                                          true, true, true, true);
+                                          true, true, true);
 }
 
 BOOST_AUTO_TEST_SUITE_END()
