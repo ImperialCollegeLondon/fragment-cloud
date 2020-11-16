@@ -1,24 +1,21 @@
 import os, sys
-sys.path.insert(0, os.path.join(os.path.abspath(os.path.dirname(__file__)), "..", ".."))
+BASE_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+if sys.path[0] != BASE_PATH:
+    sys.path.insert(0, BASE_PATH)
 
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
 import fcm
+import fcm.atmosphere as atm
+from fcm import crater_tools
 
 
 ###################################################
-def dummy_atmosphere(rho0=1):
-    h = np.linspace(0, 100, 11)
+def pancake_meteoroid():
     
-    return pd.Series(data=rho0*np.exp(-h/8), index=h)
-
-
-###################################################
-def test_pancake_meteoroid():
-    
-    rho_a = dummy_atmosphere()
+    rho_a = atm.exponential(1, 100, 8, 11)
     model = fcm.FCMparameters(g0=9.81, Rp=6371, atmospheric_density=rho_a, cloud_disp_model="CRM",
                               timestepper="AB2", precision=1e-1)
     impactor = fcm.PancakeMeteoroid(velocity=20, angle=40, density=3.3e3, radius=10, strength=100)
@@ -50,13 +47,11 @@ def test_pancake_meteoroid():
     plt.yscale('log')
     plt.show()
     
-    breakpoint()
-    
 
 ###################################################
-def test_fragmenting_meteoroid():
+def fragmenting_meteoroid():
     
-    rho_a = dummy_atmosphere(0.01)
+    rho_a = atm.exponential(0.01, 100, 8, 11)
     model = fcm.FCMparameters(g0=9.81, Rp=6371, atmospheric_density=rho_a, cloud_disp_model="DCM",
                               timestepper="AB2", precision=1e-2, strengh_scaling_disp=0.4,
                               fragment_mass_disp=0, dh=1)
@@ -67,26 +62,7 @@ def test_fragmenting_meteoroid():
     results = fcm.simulate_impact(model, impactor, h_start=100, craters=True, final_states=True,
                                   dedz=True, seed=12)
     if results.craters is not None:
-        x_min = (results.craters.x - results.craters.r).min()
-        x_max = (results.craters.x + results.craters.r).max()
-        x_margin = 0.05 * (x_max - x_min)
-        
-        y_min = (results.craters.y - results.craters.r).min()
-        y_max = (results.craters.y + results.craters.r).max()
-        y_margin = 0.05 * (y_max - y_min)
-        
-        fig, ax = plt.subplots(1, 1)
-        ax.set_ylim(x_min - x_margin, x_max + x_margin)
-        ax.set_xlim(y_min - y_margin, y_max + y_margin)
-        
-        for row in results.craters.itertuples():
-            circle = plt.Circle((row.y, row.x), row.r, color='black', fill=False)
-            ax.add_artist(circle)
-        
-        ax.set_xlabel('y')
-        ax.set_ylabel('x')
-        ax.set_aspect('equal')
-        plt.show()
+        crater_tools.plot_craters(results.craters)
     else:
         print("No craters were formed")
     
@@ -95,13 +71,11 @@ def test_fragmenting_meteoroid():
         ax.plot(results.energy_deposition.to_numpy(), results.energy_deposition.index.to_numpy())
         ax.set_ylabel("height [km]")
         ax.set_xlabel("dE/dz [kt TNT / km]")
-        # ax.set_xscale('log')
+        ax.set_xscale('log')
         plt.show()
-    
-    breakpoint()
 
 
 ####################################################################################################
 if __name__ == "__main__":
-    test_pancake_meteoroid()
-    test_fragmenting_meteoroid()
+    pancake_meteoroid()
+    fragmenting_meteoroid()
