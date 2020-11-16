@@ -75,8 +75,8 @@ class GroundType(Enum):
 ###################################################
 CrateringParams = namedtuple(
     "CrateringParams",
-    ['ground_density',              # Density of ground material where the impact happens, in [kg/m^3]
-     'ground_strength',             # Strenght of the ground material, in [kPa]
+    ['ground_density',              # Density of ground material (kg/m^3)
+     'ground_strength',             # Cohesive strenght of the ground material (kPa)
      'rim_factor',                  # scaling factor for calculating rim-to-rim impact crater diameter
      'K1', 'K2', 'Kr', 'mu', 'nu']  # coefficients in Holsapple crater radius equation
 )
@@ -96,3 +96,36 @@ FcmResults = namedtuple(
      'fragments',           # dict(int(ID): fcm.Fragment) : time series of all fragments
      'clouds']              # dict(int(ID): fcm.Fragment) : time series of all debris clouds
 )
+
+
+###################################################
+def _check_number(x, name, check_float=True, lower_bound=None, lower_incl=False,
+                  upper_bound=None, upper_incl=False, bound_format="{:.0f}"):
+    
+    assert isinstance(name, str), "Bug: variable name must be a string"
+    if check_float:
+        if not isinstance(x, (int, float)):
+            raise TypeError("{} must be a float".format(name))
+    else:
+        if not isinstance(x, int):
+            raise TypeError("{} must be an int".format(name))
+    
+    if lower_bound is not None:
+        assert isinstance(lower_bound, (int, float)), "Bug: lower bound must have type int or float"
+        if lower_incl:
+            if x < lower_bound:
+                raise ValueError(("{} must be >= " + bound_format).format(name, lower_bound))
+        elif x <= lower_bound:
+            raise ValueError(("{} must be > " + bound_format).format(name, lower_bound))
+    
+    if upper_bound is not None:
+        assert isinstance(upper_bound, (int, float)), "Bug: upper bound must have type int or float"
+        if upper_incl:
+            if x > upper_bound:
+                raise ValueError(("{} must be <= " + bound_format).format(name, upper_bound))
+        elif x >= upper_bound:
+            raise ValueError(("{} must be < " + bound_format).format(name, upper_bound))
+    
+    if check_float:
+        return float(x)
+    return int(x)
