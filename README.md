@@ -42,12 +42,23 @@ For the final step, there are a few different options:
 
 ## Tests
 
+### Python test suite
+
+Use pytest on the folder `tests/python/`.
+
+On my machine, a signature is required for whatever reason: `pytest tests/python/*_tests.py`
+
+### C++ test suite
+
 1. Navigate to an empty folder called `debug/` or `release/` inside the `fragment-cloud/` folder.
 2. Run `cmake -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTS=1 ..` This will instruct the compiler to use debug flags, which makes it possible to run them with a debugger.
 3. `cmake --build .`
 4. `ctest`
 
 ## Example usage
+
+Have a look at the scripts and the Jupyter notebook in the `examples/` folder.
+Here is just a minimal example:
 
 ```python3
 import fcm
