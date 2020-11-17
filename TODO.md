@@ -7,7 +7,8 @@
 * Velocity cutoff for ablation depending on air density? ([Passey and Melosh, 1980, p.221](https://www.sciencedirect.com/science/article/pii/001910358090072X))
 * According to [Artemieva and Shuvalov (1996)](https://doi.org/10.1007/BF02434011), fragments stay in the near wake of the leader if initial lateral velocity (just after breakup, not V_T from Passey and Melosh (1980), which is after wake separation) U < 0.6*V*sqrt(rho_air/rho_meteoroid), where V is the velocity along the trajectory
 * Implement ablation model as in [Crawford (1996)](https://doi.org/10.1017/S0252921100115490)?
-* Debris cloud model mentions that when ram pressure drops below initial strength, the tiny fragments form individual bow shocks. -> implement this? How? Ask Sarah and Gareth!
+* Debris cloud model mentions that when ram pressure drops below initial strength, the tiny fragments form individual bow shocks. -> implement this? How?
+* How do we handle the density of porous meteoroids? Do we have to differentiate between average density (including pores) and material density (without the pores) depending on where we use the density?
 
 ## Implementation
 
@@ -16,6 +17,8 @@
 * [Expression templates](https://en.wikipedia.org/wiki/Expression_templates) for lazy evaluation of `offset` operators.
 * Use [python development mode](https://docs.python.org/3.9/library/devmode.html) to spot additional warnings
 * Look into using odeint [Boost.Numeric.Odeint](https://www.boost.org/doc/libs/1_73_0/libs/numeric/odeint/doc/html/index.html)
+* It is possible that close to the ground a fragment splits up into many small pieces (so small that they get removed from the simulation), even though the resulting craters would be combined into one with an observable size. How do we tackle this problem?
+* How do we deal with the case where the debris cloud's tangential area is more than half the area of the resulting crater? This happens often enough, can't be ignored.
 
 ## Performance
 
