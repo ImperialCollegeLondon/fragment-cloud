@@ -231,12 +231,11 @@ auto _solve_fragment(Fragment&& fragment, const double z_start, const double z_g
         dEdz_vector.add_dedz(fragment);
     }
 
-    const auto info = fragment.info(z_start, z_ground);
-
     std::list<Fragment> daughter_fragments;
     if (fragmentation_happened) {
         daughter_fragments = fragment.break_apart();
     }
+    const auto info = fragment.info(z_start, z_ground);
 
     return std::make_tuple(info, std::make_pair(dEdz_vector.z_index_0(), dEdz_vector.values()),
                            timeseries, daughter_fragments);
