@@ -446,6 +446,14 @@ public:
      * @TODO unit test
      */
     void backtrack_strength(double tolerance=1e-10, unsigned short max_iterations=10);
+
+    /**
+     * @brief If impact: Take back part of the previous time step to ensure final state has
+     * the exact ground height.
+     * 
+     * @param z_ground : ground elevation above MOLA_0 in [m]
+     */
+    void backtrack_impact(double z_ground);
 };
 
 } // namespace fcm

@@ -185,16 +185,9 @@ auto _solve_fragment(Fragment&& fragment, const double z_start, const double z_g
         assert(-M_PI <= fragment.state().dtheta && fragment.state().dtheta <= M_PI);
         assert(fragment.radius() > 0);
 
-        // fill dEdz vector
-        if (calculate_dEdz) {
-            dEdz_vector.add_dedz(fragment);
-        }
-
         // check if impact
         if (fragment.z() < z_ground) {
-            const auto dt = ((z_ground - fragment.z()) / fragment.delta_prev().dz);
-            fragment += fragment.delta_prev() * dt;
-            fragment.advance_time(dt);
+            fragment.backtrack_impact(z_ground);            
             break;
         }
 
@@ -216,6 +209,11 @@ auto _solve_fragment(Fragment&& fragment, const double z_start, const double z_g
             break;
         }
 
+        // fill dEdz vector
+        if (calculate_dEdz) {
+            dEdz_vector.add_dedz(fragment);
+        }
+
         if (settings.record_data) {
             timeseries.push_back(fragment.data());
         }
@@ -229,6 +227,10 @@ auto _solve_fragment(Fragment&& fragment, const double z_start, const double z_g
     }
 
     timeseries.push_back(fragment.data());
+    if (calculate_dEdz) {
+        dEdz_vector.add_dedz(fragment);
+    }
+
     const auto info = fragment.info(z_start, z_ground);
 
     std::list<Fragment> daughter_fragments;
