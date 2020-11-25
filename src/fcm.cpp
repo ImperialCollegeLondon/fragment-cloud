@@ -9,7 +9,6 @@
 #include <algorithm>
 #include <cmath>
 #include <cassert>
-#include <deque>
 #include <functional>
 #include <list>
 #include <memory>
@@ -51,95 +50,111 @@ offset fcm::dfdt(const Fragment& fragment, const FCM_params& params, const FCM_s
         result.dy = dydt(fragment.velocity(), cos_theta, fragment.sin_phi(), params.Rp, fragment.z());
     }
 
-    switch(settings.cloud_dispersion_model) {
-        case CloudDispersionModel::pancake: {
-            result.d2r = d2rdt2_pancake(fragment.rp(), fragment.strength(), params.cloud_disp_coeff,
-                                        fragment.density(), fragment.radius());
-            result.dr = fragment.dr();
-        }
-        break;
-
-        case CloudDispersionModel::debrisCloud: {
+    if (!fragment.is_cloud()) {
+        assert(fragment.rp() <= 1.2*fragment.strength());
+        if (settings.cloud_dispersion_model == CloudDispersionModel::chainReaction) {
             result.d2r = 0;
-            result.dr = drdt_debriscloud(fragment.rp(), fragment.strength(), params.cloud_disp_coeff,
-                                         fragment.air_density(), fragment.density(),
-                                         fragment.velocity());
+            result.dr = drdt_chainreaction(0, 1, fragment.radius(), fragment.mass(), result.dm,
+                                        params.cloud_disp_coeff, fragment.density());
+        } else {
+            result.dr = result.d2r = 0;
         }
-        break;
         
-        case CloudDispersionModel::chainReaction: {
-            result.d2r = 0;
-            result.dr = drdt_chainreaction(fragment.rp(), fragment.strength(), fragment.radius(),
-                                           fragment.mass(), result.dm, params.cloud_disp_coeff,
-                                           fragment.density());
-        }
-        break;
+    } else {
+        switch(settings.cloud_dispersion_model) {
+            case CloudDispersionModel::pancake: {
+                result.d2r = d2rdt2_pancake(fragment.rp(), fragment.strength(), params.cloud_disp_coeff,
+                                            fragment.density(), fragment.radius());
+                result.dr = fragment.dr();
+                break;
+            }
 
-        default:
-            throw std::invalid_argument("Invalid cloud dispersion model");
+            case CloudDispersionModel::debrisCloud: {
+                result.d2r = 0;
+                result.dr = drdt_debriscloud(fragment.rp(), fragment.strength(), params.cloud_disp_coeff,
+                                             fragment.air_density(), fragment.density(),
+                                             fragment.velocity());
+                break;
+            }
+            
+            case CloudDispersionModel::chainReaction: {
+                result.d2r = 0;
+                result.dr = drdt_chainreaction(fragment.rp(), fragment.strength(), fragment.radius(),
+                                               fragment.mass(), result.dm, params.cloud_disp_coeff,
+                                               fragment.density());
+                break;
+            }
+        }
     }
 
     return result;
 }
 
-class dEdz_Fragment {
-public:
-    using container_t = std::deque<double>;
-    using index_t = container_t::size_type;
-
-    dEdz_Fragment(const Fragment& fragment, const double z_start, const double z_ground,
-                  const double dh) : z_start_(z_start), dh_(dh) {
-        assert(z_ground < z_start);
-
-        this->z_index_0_ = this->z_index_ = std::floor((z_start - fragment.z()) / dh);
-        this->z_index_max_ = std::floor((z_start - z_ground) / dh) + 1;
-        this->dEdz_prev_ = 0;
+dEdzInterpolator::dEdzInterpolator(const Fragment& fragment, const double z_start,
+                                   const double z_ground, const double dh)
+: z_start_(z_start), dh_(dh) {
+    if (z_ground >= z_start) {
+        throw std::invalid_argument("Fragment height must be above ground height");
     }
 
-    inline auto values() const noexcept { return this->values_; }
-    inline auto z_index_0() const noexcept { return this->z_index_0_ - this->negative_extension_; }
+    this->z_index_0_ = this->z_index_ = std::floor((z_start - fragment.z()) / dh);
+    this->z_index_max_ = std::floor((z_start - z_ground) / dh) + 1;
+    this->dEdz_prev_ = 0;
+}
 
-    void add_dedz(const Fragment& fragment) {
-        const auto tmp = (this->z_start_ - fragment.z()) / this->dh_;
-        const index_t z_index_new = std::max(fragment.sin_theta() > 0 ? std::floor(tmp)
-                                                                      : std::ceil(tmp), 0.0);
-        if (z_index_new > this->z_index_) {
-            for (auto i = this->z_index_ + 1; i <= std::min(z_index_new, this->z_index_max_); i++) {
-                const auto z_target = this->z_start_ - i * this->dh_;
-                const auto dEdz = fragment.dEdz() - (fragment.dEdz() - this->dEdz_prev_)
-                                    * (fragment.z() - z_target) / fragment.delta_prev().dz;
-                if (i - this->z_index_0_ >= this->values_.size() - this->negative_extension_) {
-                    this->values_.push_back(dEdz);
-                } else {
-                    this->values_[i - this->z_index_0_ + this->negative_extension_] += dEdz;
-                }
+void dEdzInterpolator::add_dedz(const Fragment& fragment) {
+    const auto tmp = (this->z_start_ - fragment.z()) / this->dh_;
+    const index_t z_index_new = std::max(0.0,
+                                         fragment.sin_theta() > 0 ? std::floor(tmp) : std::ceil(tmp));
+    if (z_index_new > this->z_index_) {
+        for (auto i = this->z_index_ + 1; i <= std::min(z_index_new, this->z_index_max_); i++) {
+            const auto z_target = this->z_start_ - i * this->dh_;
+            const auto dEdz = fragment.dEdz() - (fragment.dEdz() - this->dEdz_prev_)
+                              * (fragment.z() - z_target) / fragment.delta_prev().dz;
+            if (i - this->z_index_0_ >= this->values_.size() - this->negative_extension_) {
+                this->values_.push_back(dEdz);
+            } else {
+                this->values_[i - this->z_index_0_ + this->negative_extension_] += dEdz;
             }
         }
-        else if (z_index_new < this->z_index_) {
-            for (auto i = long(this->z_index_) - 1; i >= z_index_new && i >= 0; i--) {
-                const auto z_target = this->z_start_ - i * this->dh_;
-                const auto dEdz = fragment.dEdz() - (fragment.dEdz() - this->dEdz_prev_)
-                    * (fragment.z() - z_target) / fragment.delta_prev().dz;
-                if (i - this->z_index_0_ >= this->values_.size() - this->negative_extension_) {
-                    if (this->z_index_0_ == this->negative_extension_) break;
-                    this->values_.push_front(dEdz);
-                    this->negative_extension_++;
-                } else {
-                    this->values_[i - this->z_index_0_ + this->negative_extension_] += dEdz;
-                }
-            }
-        }
-        this->z_index_ = z_index_new;
-        this->dEdz_prev_ = fragment.dEdz();
     }
+    else if (z_index_new < this->z_index_) {
+        for (auto i = long(this->z_index_) - 1; i >= z_index_new && i >= 0; i--) {
+            const auto z_target = this->z_start_ - i * this->dh_;
+            const auto dEdz = fragment.dEdz() - (fragment.dEdz() - this->dEdz_prev_)
+                              * (fragment.z() - z_target) / fragment.delta_prev().dz;
+            if (i - this->z_index_0_ >= this->values_.size() - this->negative_extension_) {
+                if (this->z_index_0_ == this->negative_extension_) break;
+                this->values_.push_front(dEdz);
+                this->negative_extension_++;
+            } else {
+                this->values_[i - this->z_index_0_ + this->negative_extension_] += dEdz;
+            }
+        }
+    }
+    this->z_index_ = z_index_new;
+    this->dEdz_prev_ = fragment.dEdz();
+}
 
-private:
-    double z_start_, dh_, dEdz_prev_;
-    index_t z_index_, z_index_0_, z_index_max_;
-    index_t negative_extension_ = 0;
-    container_t values_ {};
-};
-
+/**
+ * @brief Solve ODEs for one fragment, stop if
+ * (i) impact, (ii) escape from atmosphere, (iii) too small to produce detectable crater,
+ * (iv) debris cloud deposited 99.99% of original kinetic energy, (v) break up
+ * 
+ * @param fragment: Fragment in initial state
+ * @param z_start: simulation start elevation above MOLA_0 in [m]
+ * @param z_ground: ground elevation above MOLA_0 in [m]
+ * @param calculate_dEdz: whether to calculate dE/dz
+ * @param params: simulation parameters
+ * @param settings: simulation settings
+ * @param df: function that calculates df/dt
+ * @param step: function that advances state of fragment by one time step
+ * @return tuple with
+ *      [0] FragmentInfo when stop condition is reached
+ *      [1] Pair with first: z index of first dE/dz value, second: dE/dz values
+ *      [2] list of std::arrays with time series data
+ *      [3] list of new fragments (non-empty if break up occured
+ */
 auto _solve_fragment(Fragment&& fragment, const double z_start, const double z_ground,
                      const bool calculate_dEdz, const FCM_params& params, const FCM_settings& settings,
                      const std::function<offset(const Fragment&)>& df,
@@ -156,11 +171,13 @@ auto _solve_fragment(Fragment&& fragment, const double z_start, const double z_g
     // TODO: maybe base this on velocity / strength as well?
     const auto dt = settings.precision * (settings.fixed_timestep ? 1.0 : 1e-4);
     fragment = fcm::RK4(std::move(fragment), df, dt);
-    fragment.advance_time(dt).save_df_prev(std::move(df_prev)).set_dt_next(dt);
+    fragment.advance_time(dt)
+        .save_df_prev(std::move(df_prev))
+        .set_dt_next(dt);
 
     unsigned int iter = 1;
     bool fragmentation_happened = false;
-    dEdz_Fragment dEdz_vector(fragment, z_start, z_ground, settings.dh);
+    dEdzInterpolator dEdz_vector(fragment, z_start, z_ground, settings.dh);
 
     while (iter < settings.max_iterations) {
         assert(fragment.velocity() >= 0);
@@ -168,16 +185,9 @@ auto _solve_fragment(Fragment&& fragment, const double z_start, const double z_g
         assert(-M_PI <= fragment.state().dtheta && fragment.state().dtheta <= M_PI);
         assert(fragment.radius() > 0);
 
-        // fill dEdz vector
-        if (calculate_dEdz) {
-            dEdz_vector.add_dedz(fragment);
-        }
-
         // check if impact
         if (fragment.z() < z_ground) {
-            const auto dt = ((z_ground - fragment.z()) / fragment.delta_prev().dz);
-            fragment += fragment.delta_prev() * dt;
-            fragment.advance_time(dt);
+            fragment.backtrack_impact(z_ground);            
             break;
         }
 
@@ -193,11 +203,15 @@ auto _solve_fragment(Fragment&& fragment, const double z_start, const double z_g
         }
 
         // check if fragment strength is exceeded => break up
-        // TODO: make this a function or a class for testing
         if (!fragment.is_cloud() && fragment.rp() > fragment.strength()) {
             fragment.backtrack_strength();
             fragmentation_happened = true;
             break;
+        }
+
+        // fill dEdz vector
+        if (calculate_dEdz) {
+            dEdz_vector.add_dedz(fragment);
         }
 
         if (settings.record_data) {
@@ -213,12 +227,15 @@ auto _solve_fragment(Fragment&& fragment, const double z_start, const double z_g
     }
 
     timeseries.push_back(fragment.data());
-    const auto info = fragment.info(z_start, z_ground);
+    if (calculate_dEdz) {
+        dEdz_vector.add_dedz(fragment);
+    }
 
     std::list<Fragment> daughter_fragments;
     if (fragmentation_happened) {
         daughter_fragments = fragment.break_apart();
     }
+    const auto info = fragment.info(z_start, z_ground);
 
     return std::make_tuple(info, std::make_pair(dEdz_vector.z_index_0(), dEdz_vector.values()),
                            timeseries, daughter_fragments);
@@ -477,7 +494,7 @@ std::list<Crater> fcm::calculate_craters(
         for (auto it = craters.begin(); it != craters.cend(); it++) {
             auto it2 = it;
             while (++it2 != craters.end() && it2->x - it->x < r_max + it->r) {
-                if (_dist(*it, *it2) < it2->r + it->r) {
+                if (_dist(*it, *it2) < 0.75 * std::max(it2->r, it->r) + 0.25*(it->r + it2->r)) {
                     const auto r1cubed = std::cube(it->r);
                     const auto r2cubed = std::cube(it2->r);
                     it->x = _mean_coordinate(it->x, r1cubed, it2->x, r2cubed);

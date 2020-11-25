@@ -27,12 +27,13 @@ auto make_settings(const fcm::CloudDispersionModel cloud_model=fcm::CloudDispers
                    const fcm::ODEsolver solver=fcm::ODEsolver::AB2, const bool flat_earth=false,
                    const bool fixed_timestep=true) {
     return std::make_shared<const fcm::FCM_settings>(cloud_model, solver, flat_earth,
-                                                     fixed_timestep, fixed_timestep ? 5e-3 : 1e-2,
+                                                     fixed_timestep, 1e-2,
                                                      1000, true);
 }
 
 auto test_params(const std::shared_ptr<const fcm::FCM_settings>& settings, const double strength,
-                 const double phi=0, const double theta=1, const double cloud_frac=1) {
+                 const bool is_cloud=true, const double phi=0, const double theta=1,
+                 const double cloud_frac=1) {
     const fcm::FCM_crater_coeff crater_coeff(0.75, 1.5e3, 1e4, 0.15, 1, 1.1, 0.4, 0.33, 1.3);
     const fcm::FCM_params p(5, 6371e3, 2e-9, 0.5, 5e-4, 330e6, 0.2, 1.5, 1, 0.9, crater_coeff);
 
@@ -55,10 +56,15 @@ auto test_params(const std::shared_ptr<const fcm::FCM_settings>& settings, const
     const fcm::Meteoroid m(density, 10e3, radius, std::abs(theta), strength, cloud_frac,
                            std::move(structural_group));
     // Fragment ctor
-    const fcm::Fragment f(m.mass(), m.velocity, m.radius, theta, 20e3, m.strength, m.cloud_mass_frac,
-                          m.density, std::make_shared<const fcm::AtmosphericDensity>(rho_a),
-                          std::make_shared<const fcm::FCM_params>(p), settings, 123U,
-                          std::list<fcm::SubFragment>(), 0, 0, 0, std::cos(phi), std::sin(phi));
+    fcm::Fragment f(m.mass(), m.velocity, m.radius, theta, 20e3, m.strength, m.cloud_mass_frac,
+                    m.density, std::make_shared<const fcm::AtmosphericDensity>(rho_a),
+                    std::make_shared<const fcm::FCM_params>(p), settings, 123U,
+                    std::list<fcm::SubFragment>(), 0, 0, 0, std::cos(phi), std::sin(phi));
+    if (is_cloud) {
+        const auto tmp = f.break_apart();
+        BOOST_TEST_REQUIRE(tmp.size() == 1);
+        f = tmp.front();
+    }
 
     return std::make_tuple(p, m, f, rho_a);
 }
@@ -193,7 +199,7 @@ BOOST_AUTO_TEST_CASE(chainReaction, * utf::tolerance(1e-8))
 BOOST_AUTO_TEST_CASE(phi, * utf::tolerance(1e-8))
 {
     const auto settings = make_settings(fcm::CloudDispersionModel::chainReaction);
-    const auto [params, m, fragment, rho_a] = test_params(settings, 1e6, 0.5);
+    const auto [params, m, fragment, rho_a] = test_params(settings, 1e6, false, 0.5);
     const auto result = fcm::dfdt(fragment, params, *settings);
 
     BOOST_TEST(result.dm < 0);
@@ -203,7 +209,7 @@ BOOST_AUTO_TEST_CASE(phi, * utf::tolerance(1e-8))
     BOOST_TEST(result.dr < 0);
     BOOST_TEST(result.d2r == 0);
 
-    const auto [params_2, m_2, fragment_2, rho_a_] = test_params(settings, 1e6, -0.5);
+    const auto [params_2, m_2, fragment_2, rho_a_] = test_params(settings, 1e6, false, -0.5);
     const auto result_2 = fcm::dfdt(fragment_2, params_2, *settings);
 
     BOOST_TEST(result_2.dm < 0);
@@ -217,7 +223,7 @@ BOOST_AUTO_TEST_CASE(phi, * utf::tolerance(1e-8))
 BOOST_AUTO_TEST_CASE(negative_theta, * utf::tolerance(1e-8))
 {
     const auto settings = make_settings(fcm::CloudDispersionModel::chainReaction);
-    const auto [params, m, fragment, rho_a] = test_params(settings, 1e6, 0.5, -0.1);
+    const auto [params, m, fragment, rho_a] = test_params(settings, 1e6, true, 0.5, -0.1);
     const auto result = fcm::dfdt(fragment, params, *settings);
 
     BOOST_TEST(result.dm < 0);
@@ -245,13 +251,20 @@ BOOST_AUTO_TEST_CASE(flat, * utf::tolerance(1e-8))
 }
 
 BOOST_AUTO_TEST_SUITE_END()
+// BOOST_AUTO_TEST_SUITE(dEdz)
+
+// BOOST_AUTO_TEST_CASE(all_pancake)
+// {
+
+// }
+
+// BOOST_AUTO_TEST_SUITE_END()
 BOOST_AUTO_TEST_SUITE(atmospheric_entry)
 
 BOOST_AUTO_TEST_CASE(normal_entry)
 {
-    // TODO: what's up with the pancake model?
     const std::vector<fcm::CloudDispersionModel> cloud_models {
-        /*fcm::CloudDispersionModel::pancake, */fcm::CloudDispersionModel::debrisCloud,
+        fcm::CloudDispersionModel::pancake, fcm::CloudDispersionModel::debrisCloud,
         fcm::CloudDispersionModel::chainReaction
     };
     const std::vector<fcm::ODEsolver> solvers {fcm::ODEsolver::forwardEuler, fcm::ODEsolver::improvedEuler,
@@ -266,9 +279,8 @@ BOOST_AUTO_TEST_CASE(normal_entry)
     for (const auto cloud_mass_frac : cloud_mass_fractions) {
     for (const auto cloud_model : cloud_models) {
     for (const auto solver : solvers) {
-        const bool fixed_timestep = false;
         const auto settings = make_settings(cloud_model, solver, flat, fixed_timestep);
-        const auto [params, meteoroid, f, rho_a] = test_params(settings, strength, 0, 1, cloud_mass_frac);
+        const auto [params, meteoroid, f, rho_a] = test_params(settings, strength, false, 0, 1, cloud_mass_frac);
         
         const double ground_height = 10e3;
         const double start_height = 70e3;
@@ -293,8 +305,7 @@ BOOST_AUTO_TEST_CASE(normal_entry)
                     BOOST_TEST(ts.back()[7] > ts.front()[7]);
                 }
             } else {
-                const auto second_last_state = *++ts.crbegin();
-                BOOST_TEST(second_last_state[7] <= ts.front()[7], tt::tolerance(1e-2));
+                BOOST_TEST(ts.back()[7] <= ts.front()[7], tt::tolerance(1e-2));
             }
 
             if (!info.parent_ids.empty()) {
@@ -364,7 +375,7 @@ BOOST_AUTO_TEST_CASE(does_not_finish_bug)
 BOOST_AUTO_TEST_CASE(very_shallow_angle)
 {
     const auto settings = make_settings();
-    auto [params, meteoroid, f, rho_a] = test_params(settings, 1e5);
+    auto [params, meteoroid, f, rho_a] = test_params(settings, 1e5, false);
 
     const double entry_height = 70e3;
     meteoroid.angle = 0.02;
@@ -408,7 +419,7 @@ BOOST_AUTO_TEST_CASE(it_runs)
     };
 
     const auto settings = make_settings(fcm::CloudDispersionModel::pancake);
-    const auto [params, m, f, r] = test_params(settings, 1e6);
+    const auto [params, m, f, r] = test_params(settings, 1e6, false);
 
     const auto craters = fcm::calculate_craters(fragment_data, params, *settings);
     BOOST_TEST(craters.size() <= 3);

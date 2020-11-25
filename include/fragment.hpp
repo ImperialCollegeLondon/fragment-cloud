@@ -194,10 +194,10 @@ public:
      * @param strength: fragment aerodynamic strength, in [Pa] 
      * @param cloud_mass_frac: on breakup, fraction of fragment mass that forms a debris cloud
      * @param init_density: fragment density, in [kg/m^3]
-     * @param rho_a: atmospheric density interpolator class 
-     * @param params 
-     * @param settings
-     * @param fragment_id
+     * @param rho_a: atmospheric density interpolator 
+     * @param params: simulation parameters
+     * @param settings: simulation settings
+     * @param fragment_id: fragment ID
      * @param inner_structure: list of subfragments that will be generated on breakup
      * @param t: start time, if not 0 
      * @param x: start x-position, if not 0 
@@ -296,7 +296,7 @@ public:
     constexpr auto& state() const noexcept { return this->state_; }
     
     /**
-     * @brief change to state in previous iteration (for adaptive time step)
+     * @brief change to state in previous iteration
      */
     inline const auto& delta_prev() const noexcept { return this->delta_prev_; }
     
@@ -446,6 +446,14 @@ public:
      * @TODO unit test
      */
     void backtrack_strength(double tolerance=1e-10, unsigned short max_iterations=10);
+
+    /**
+     * @brief If impact: Take back part of the previous time step to ensure final state has
+     * the exact ground height.
+     * 
+     * @param z_ground : ground elevation above MOLA_0 in [m]
+     */
+    void backtrack_impact(double z_ground);
 };
 
 } // namespace fcm

@@ -121,8 +121,8 @@ Lateral view (from Passey and Melosh, 1980) | Bird's eye view
 
 Using these coordinates, the meteoroid physics equations are:
 
-* <img src="https://render.githubusercontent.com/render/math?math=\frac{dv}{dt}=-\frac{C_D\rho_av^2\pir^2}{2m}%2Bg\sin(\theta)">
-* <img src="https://render.githubusercontent.com/render/math?math=\frac{dm}{dt}=-\frac{C_\mathrm{ab}}{2}\rho_av^3\pir^2">
+* <img src="https://render.githubusercontent.com/render/math?math=\frac{dv}{dt}=-\frac{C_D\rho_av^2\pi%20r^2}{2m}%2Bg\sin(\theta)">
+* <img src="https://render.githubusercontent.com/render/math?math=\frac{dm}{dt}=-\frac{C_\mathrm{ab}}{2}\rho_av^3\pi%20r^2">
 * <img src="https://render.githubusercontent.com/render/math?math=\frac{d\theta}{dt}=\frac{g\cos(\theta)}{v}-\frac{C_L\rho_a\pi%20r^2v}{2m}-\frac{v\cos(\theta)}{R_p%2Bz}">
 * <img src="https://render.githubusercontent.com/render/math?math=\frac{dz}{dt}=-v\sin(\theta)">
 * <img src="https://render.githubusercontent.com/render/math?math=\frac{dx}{dt} = v\cos(\theta)\cos(\phi)\frac{R_p}{R_p%2Bz}">
@@ -181,3 +181,35 @@ Example of inner structure definition from Wheeler et al. (2018):
 
 ### Impact crater formation
 
+When a fragment or a debris cloud impacts the ground, scaling relations by Holsapple (1987)
+[DOI:10.1016/0734-743X(87)90051-0](https://doi.org/10.1016/0734-743X(87)90051-0) are used
+to calculate the crater diameter <img src="https://render.githubusercontent.com/render/math?math=D">:
+
+<img src="https://render.githubusercontent.com/render/math?math=D=2f_\mathrm{rim}K_rV^{1/3}">, where
+
+<img src="https://render.githubusercontent.com/render/math?math=V=\frac{m}{\rho_t}K_1\left(\frac{g_0r}{v_z^2}\left(\frac{\rho_t}{\rho_i}\right)^\frac{6\nu-2-\mu}{3\mu}%2BK_2\left[\frac{Y}{\rho_tv_z^2}\left(\frac{\rho_t}{\rho_i}\right)^\frac{6\nu-2}{3\mu}\right]^\frac{2%2B\mu}{2}\right)^{-\frac{3\mu}{2%2B\mu}}.">
+
+The variables are defined as:
+
+variable | description | variable | description
+:--: | :-- | :--: | :--
+<img src="https://render.githubusercontent.com/render/math?math=m"> | impactor mass | <img src="https://render.githubusercontent.com/render/math?math=\rho_t"> | terrain density
+<img src="https://render.githubusercontent.com/render/math?math=g_0"> | gravitational accelecation | <img src="https://render.githubusercontent.com/render/math?math=r"> | impactor radius
+<img src="https://render.githubusercontent.com/render/math?math=v_z"> | impactor vertical velocity | <img src="https://render.githubusercontent.com/render/math?math=\rho_i"> | impactor density
+<img src="https://render.githubusercontent.com/render/math?math=Y"> | terrain cohesive strength
+
+The parameters <img src="https://render.githubusercontent.com/render/math?math=K_1,K_2,\mu,\nu"> are user-definable numbers in the Holsapple equations.
+Defaults for two ground types are provided in the `fcm` module.
+
+#### Crater merging
+
+Because of the fact that all fragments impact the ground nearly simultaneously, two fragments impacting closeby typically form only one crater.
+Our model has a built-in thereshold below which two nearby craters are merged into one larger crater.
+The volume of the larger crater equals the sum of the two smaller crater volumes.
+
+The threshold is the following: Let <img src="https://render.githubusercontent.com/render/math?math=d"> be the distance between the centers of two craters with radii <img src="https://render.githubusercontent.com/render/math?math=r_1"> and <img src="https://render.githubusercontent.com/render/math?math=r_2">.
+The two craters are merged if
+
+<img src="https://render.githubusercontent.com/render/math?math=d<0.75\cdot\mathrm{max}(r_1,r_2)%2B0.25\cdot(r_1%2Br_2)">
+
+This is a weighted combination of two thresholds: <img src="https://render.githubusercontent.com/render/math?math=d<\mathrm{max}(r_1,r_2)"> means that two craters are only merged if one of their centers lays within the other crater. <img src="https://render.githubusercontent.com/render/math?math=d<r_1%2Br_2"> means that two craters are merged when they touch. The weighting of these two criteria reflects the majority of the data gathered by Daubar et al. (2019).

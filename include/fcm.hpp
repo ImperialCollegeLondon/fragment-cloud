@@ -161,6 +161,27 @@ struct Meteoroid {
  */
 offset dfdt(const Fragment& fragment, const FCM_params& params, const FCM_settings& settings);
 
+
+class dEdzInterpolator {
+public:
+    using container_t = std::deque<double>;
+    using index_t = container_t::size_type;
+
+    dEdzInterpolator(const Fragment& fragment, const double z_start, const double z_ground,
+                     const double dh);
+
+    inline auto values() const noexcept { return this->values_; }
+    constexpr auto z_index_0() const noexcept { return this->z_index_0_ - this->negative_extension_; }
+
+    void add_dedz(const Fragment& fragment);
+
+private:
+    double z_start_, dh_, dEdz_prev_;
+    index_t z_index_, z_index_0_, z_index_max_;
+    index_t negative_extension_ = 0;
+    container_t values_ {};
+};
+
 /**
  * @brief Simulates atmospheric entry including break up. Returns time series data for all
  *        meteoroid fragments, as well as the sum of dE/dz(z) of all fragments.

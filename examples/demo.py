@@ -17,7 +17,7 @@ def pancake_meteoroid():
     
     rho_a = atm.exponential(1, 100, 8, 11)
     model = fcm.FCMparameters(g0=9.81, Rp=6371, atmospheric_density=rho_a, cloud_disp_model="CRM",
-                              timestepper="AB2", precision=1e-1)
+                              timestepper="AB2", precision=1e-2)
     impactor = fcm.PancakeMeteoroid(velocity=20, angle=40, density=3.3e3, radius=10, strength=100)
     
     results = fcm.simulate_impact(model, impactor, h_start=100, craters=False, timeseries=True)
@@ -33,10 +33,12 @@ def pancake_meteoroid():
         combined = bulk.timeseries
     
     plt.plot(combined.dEdz, combined.z, '+')
+    plt.plot(results.energy_deposition.to_numpy(), results.energy_deposition.index.to_numpy())
     if len(results.clouds) > 0:
         plt.plot(combined.r/combined.r.max() * combined.dEdz.max(), combined.z)
     plt.ylabel("height [km]")
     plt.xlabel("dE/dz [kt TNT / km]")
+    plt.xscale('log')
     plt.show()
     
     t_diff = np.diff(combined.index).astype(float)*1e-9
@@ -55,8 +57,8 @@ def fragmenting_meteoroid():
     model = fcm.FCMparameters(g0=9.81, Rp=6371, atmospheric_density=rho_a, cloud_disp_model="DCM",
                               timestepper="AB2", precision=1e-2, strengh_scaling_disp=0.4,
                               fragment_mass_disp=0, dh=1)
-    groups = [fcm.StructuralGroup(mass_fraction=1, pieces=3, density=3e3, strength=500)]
-    impactor = fcm.FCMmeteoroid(velocity=10, angle=30, density=3e3, strength=100, radius=1,
+    groups = [fcm.StructuralGroup(mass_fraction=1, pieces=10, density=3e3, strength=200)]
+    impactor = fcm.FCMmeteoroid(velocity=10, angle=50, density=3e3, strength=100, radius=1,
                                 structural_groups=groups)
     
     results = fcm.simulate_impact(model, impactor, h_start=100, craters=True, final_states=True,

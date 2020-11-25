@@ -204,32 +204,50 @@ inline auto _relative_error(const Fragment& frag) {
     return std::abs(1.0 - frag.rp() / frag.strength());
 }
 
-void Fragment::backtrack_strength(double tolerance, unsigned short max_iterations) {
+void Fragment::backtrack_strength(const double tolerance, const unsigned short max_iterations) {
     unsigned short count = 0;
     auto relative_error = _relative_error(*this);
+
+    // TODO: is this really a copy?
+    offset new_delta_prev(this->delta_prev());
+
     while (relative_error > tolerance) {
         const auto divisor = 2.0 * this->delta_prev().dv / (this->velocity() * this->dt_prev())
                             + this->velocity() * this->sin_theta() / this->scale_height();
         const auto dt = (this->strength() / this->rp() - 1) / divisor;
-        *this += this->delta_prev() * (dt / this->dt_prev());
+        const auto correction = this->delta_prev() * (dt / this->dt_prev());
+        *this += correction;
         this->advance_time(dt);
+        new_delta_prev += correction;
 
         const auto new_relative_error = _relative_error(*this);
         if (new_relative_error > relative_error) {
-            // std::cerr << "Warning: Back-tracking to get fragment.rp() close to "
-            //             << "fragment.strength() is diverging. Stopped after " << count
-            //             << " iterations. Relative error = " << std::setprecision(3)
-            //             << 100 * std::abs(1 - this->rp() / this->strength()) << "%" << std::endl;
+            if (new_relative_error > 0.001) {
+                std::cerr << "Warning: Back-tracking to get fragment.rp() close to "
+                          << "fragment.strength() is diverging. Stopped after " << count
+                          << " iterations. Relative error = " << std::setprecision(3)
+                          << 100 * new_relative_error << "%" << std::endl;
+            }
             break;
         }
         relative_error = new_relative_error;
         count++;
         if (count > max_iterations) {
             std::cerr << "Warning: Back-tracking to get fragment.rp() close to"
-                        << "fragment.strength() did not converge. Stopped after 10 iterations."
-                        << " Relative error = " << std::setprecision(3)
-                        << 100 * std::abs(1 - this->rp() / this->strength()) << "%" << std::endl;
+                      << "fragment.strength() did not converge. Stopped after 10 iterations."
+                      << " Relative error = " << std::setprecision(3)
+                      << 100 * std::abs(1 - this->rp() / this->strength()) << "%" << std::endl;
             break;
         }
     }
+    this->delta_prev_ = std::move(new_delta_prev);
+}
+
+void Fragment::backtrack_impact(const double z_ground) {
+    const offset new_delta_prev(this->delta_prev());
+    const auto fraction = ((z_ground - this->z()) / new_delta_prev.dz);
+    const auto correction = new_delta_prev * fraction;
+    this->advance_time(fraction * this->dt_prev());
+    *this += correction;
+    this->delta_prev_ = new_delta_prev + correction;
 }
