@@ -17,7 +17,7 @@ def pancake_meteoroid():
     
     rho_a = atm.exponential(1, 100, 8, 11)
     model = fcm.FCMparameters(g0=9.81, Rp=6371, atmospheric_density=rho_a, cloud_disp_model="CRM",
-                              timestepper="AB2", precision=1e-1)
+                              timestepper="AB2", precision=1e-2)
     impactor = fcm.PancakeMeteoroid(velocity=20, angle=40, density=3.3e3, radius=10, strength=100)
     
     results = fcm.simulate_impact(model, impactor, h_start=100, craters=False, timeseries=True)

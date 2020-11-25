@@ -1,5 +1,7 @@
 import os, sys
-sys.path.insert(0, os.path.join(os.path.abspath(os.path.dirname(__file__)), "..", ".."))
+top_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+if sys.path[0] != top_dir:
+    sys.path.insert(0, top_dir)
 
 import numpy as np
 import pandas as pd
