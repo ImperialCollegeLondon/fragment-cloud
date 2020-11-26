@@ -198,7 +198,7 @@ variable | description | variable | description
 <img src="https://render.githubusercontent.com/render/math?math=v_z"> | impactor vertical velocity | <img src="https://render.githubusercontent.com/render/math?math=\rho_i"> | impactor density
 <img src="https://render.githubusercontent.com/render/math?math=Y"> | terrain cohesive strength | <img src="https://render.githubusercontent.com/render/math?math=f_\mathrm{rim}"> | rim-to-rim factor
 
-The parameters <img src="https://render.githubusercontent.com/render/math?math=K_1,K_2,\mu,\nu">
+The parameters <img src="https://render.githubusercontent.com/render/math?math=K_r,K_1,K_2,\mu,\nu">
 are user-definable numbers in the Holsapple equations. The rim-to-rim factor expresses that
 from a top-down perspective, the crater size is measured including the rim around the crater formed by the ejecta.
 Defaults for two ground types are provided in the `fcm` module.
