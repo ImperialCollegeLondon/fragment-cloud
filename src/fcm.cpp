@@ -102,7 +102,8 @@ dEdzInterpolator::dEdzInterpolator(const Fragment& fragment, const double z_star
 
     this->z_index_0_ = this->z_index_ = std::floor((z_start - fragment.z()) / dh);
     this->z_index_max_ = std::floor((z_start - z_ground) / dh) + 1;
-    this->dEdz_prev_ = 0;
+    this->dEdz_prev_ = fragment.dEdz();
+    this->values_.push_back(fragment.dEdz());
 }
 
 void dEdzInterpolator::add_dedz(const Fragment& fragment) {
@@ -433,7 +434,7 @@ std::pair<
         if (calculate_dEdz) {
             assert(dEdz_fragment.first >= 0);
             assert(dEdz_fragment.first + dEdz_fragment.second.size() <= dEdz.size());
-            for (size_t i = 0; i < dEdz_fragment.second.size(); i++) {
+            for (size_t i = 1; i < dEdz_fragment.second.size(); i++) {
                 dEdz[i + dEdz_fragment.first] += dEdz_fragment.second[i];
             }
         }

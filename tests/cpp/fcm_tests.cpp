@@ -27,8 +27,7 @@ auto make_settings(const fcm::CloudDispersionModel cloud_model=fcm::CloudDispers
                    const fcm::ODEsolver solver=fcm::ODEsolver::AB2, const bool flat_earth=false,
                    const bool fixed_timestep=true) {
     return std::make_shared<const fcm::FCM_settings>(cloud_model, solver, flat_earth,
-                                                     fixed_timestep, 1e-2,
-                                                     1000, true);
+                                                     fixed_timestep, 1e-2, 10, true);
 }
 
 auto test_params(const std::shared_ptr<const fcm::FCM_settings>& settings, const double strength,
@@ -43,7 +42,6 @@ auto test_params(const std::shared_ptr<const fcm::FCM_settings>& settings, const
     std::vector<double> d(h.size());
     std::transform(h.cbegin(), h.cend(), d.begin(),
                    [=](const double z){ return rho_0 * std::exp(-z/H); });
-    //const fcm::AtmosphericDensity rho_a(std::move(h), d);
 
     const double mass = 0.34;
     const double radius = 0.03;
@@ -128,7 +126,7 @@ BOOST_AUTO_TEST_CASE(pancake, * utf::tolerance(1e-8))
 {
     const auto settings = make_settings(fcm::CloudDispersionModel::pancake);
     const auto [params, m, fragment, rho_a] = test_params(settings, 1e6);
-    const auto result = fcm::dfdt(fragment, params, *settings);
+    const auto result = fcm::dfdt(fragment, params, *settings, 0);
 
     BOOST_TEST(result.dm < 0);
     BOOST_TEST(result.dx > 0);
@@ -138,7 +136,7 @@ BOOST_AUTO_TEST_CASE(pancake, * utf::tolerance(1e-8))
     BOOST_TEST(result.d2r == 0);
 
     const auto [params_2, m_2, fragment_2, rho_a_] = test_params(settings, 1e4);
-    const auto result_2 = fcm::dfdt(fragment_2, params_2, *settings);
+    const auto result_2 = fcm::dfdt(fragment_2, params_2, *settings, 1000);
 
     BOOST_TEST(result_2.dm < 0);
     BOOST_TEST(result_2.dx > 0);
@@ -152,7 +150,7 @@ BOOST_AUTO_TEST_CASE(debrisCloud, * utf::tolerance(1e-8))
 {
     const auto settings = make_settings(fcm::CloudDispersionModel::debrisCloud);
     const auto [params, m, fragment, rho_a] = test_params(settings, 1e6);
-    const auto result = fcm::dfdt(fragment, params, *settings);
+    const auto result = fcm::dfdt(fragment, params, *settings, -200);
 
     BOOST_TEST(result.dm < 0);
     BOOST_TEST(result.dx > 0);
@@ -162,7 +160,7 @@ BOOST_AUTO_TEST_CASE(debrisCloud, * utf::tolerance(1e-8))
     BOOST_TEST(result.d2r == 0);
 
     const auto [params_2, m_2, fragment_2, rho_a_] = test_params(settings, 1e4);
-    const auto result_2 = fcm::dfdt(fragment_2, params_2, *settings);
+    const auto result_2 = fcm::dfdt(fragment_2, params_2, *settings, 0);
 
     BOOST_TEST(result_2.dm < 0);
     BOOST_TEST(result_2.dx > 0);
@@ -176,7 +174,7 @@ BOOST_AUTO_TEST_CASE(chainReaction, * utf::tolerance(1e-8))
 {
     const auto settings = make_settings(fcm::CloudDispersionModel::chainReaction);
     const auto [params, m, fragment, rho_a] = test_params(settings, 1e6);
-    const auto result = fcm::dfdt(fragment, params, *settings);
+    const auto result = fcm::dfdt(fragment, params, *settings, 400);
 
     BOOST_TEST(result.dm < 0);
     BOOST_TEST(result.dx > 0);
@@ -186,7 +184,7 @@ BOOST_AUTO_TEST_CASE(chainReaction, * utf::tolerance(1e-8))
     BOOST_TEST(result.d2r == 0);
 
     const auto [params_2, m_2, fragment_2, rho_a_] = test_params(settings, 1e4);
-    const auto result_2 = fcm::dfdt(fragment_2, params_2, *settings);
+    const auto result_2 = fcm::dfdt(fragment_2, params_2, *settings, 0);
 
     BOOST_TEST(result_2.dm < 0);
     BOOST_TEST(result_2.dx > 0);
@@ -200,7 +198,7 @@ BOOST_AUTO_TEST_CASE(phi, * utf::tolerance(1e-8))
 {
     const auto settings = make_settings(fcm::CloudDispersionModel::chainReaction);
     const auto [params, m, fragment, rho_a] = test_params(settings, 1e6, false, 0.5);
-    const auto result = fcm::dfdt(fragment, params, *settings);
+    const auto result = fcm::dfdt(fragment, params, *settings, 0);
 
     BOOST_TEST(result.dm < 0);
     BOOST_TEST(result.dx > 0);
@@ -210,7 +208,7 @@ BOOST_AUTO_TEST_CASE(phi, * utf::tolerance(1e-8))
     BOOST_TEST(result.d2r == 0);
 
     const auto [params_2, m_2, fragment_2, rho_a_] = test_params(settings, 1e6, false, -0.5);
-    const auto result_2 = fcm::dfdt(fragment_2, params_2, *settings);
+    const auto result_2 = fcm::dfdt(fragment_2, params_2, *settings, 2000);
 
     BOOST_TEST(result_2.dm < 0);
     BOOST_TEST(result_2.dx > 0);
@@ -224,7 +222,7 @@ BOOST_AUTO_TEST_CASE(negative_theta, * utf::tolerance(1e-8))
 {
     const auto settings = make_settings(fcm::CloudDispersionModel::chainReaction);
     const auto [params, m, fragment, rho_a] = test_params(settings, 1e6, true, 0.5, -0.1);
-    const auto result = fcm::dfdt(fragment, params, *settings);
+    const auto result = fcm::dfdt(fragment, params, *settings, -1);
 
     BOOST_TEST(result.dm < 0);
     BOOST_TEST(result.dx > 0);
@@ -239,7 +237,7 @@ BOOST_AUTO_TEST_CASE(flat, * utf::tolerance(1e-8))
     const auto settings = make_settings(fcm::CloudDispersionModel::chainReaction,
                                         fcm::ODEsolver::AB2, true);
     const auto [params, m, fragment, rho_a] = test_params(settings, 1e6);
-    const auto result = fcm::dfdt(fragment, params, *settings);
+    const auto result = fcm::dfdt(fragment, params, *settings, 0);
 
     BOOST_TEST(result.dm < 0);
     BOOST_TEST(result.dtheta > 0);
@@ -251,14 +249,88 @@ BOOST_AUTO_TEST_CASE(flat, * utf::tolerance(1e-8))
 }
 
 BOOST_AUTO_TEST_SUITE_END()
-// BOOST_AUTO_TEST_SUITE(dEdz)
+BOOST_AUTO_TEST_SUITE(dEdz)
 
-// BOOST_AUTO_TEST_CASE(all_pancake)
-// {
+BOOST_AUTO_TEST_CASE(pancake, * utf::tolerance(0.3))
+{
+    const std::vector<fcm::CloudDispersionModel> cloud_models {
+        fcm::CloudDispersionModel::pancake, fcm::CloudDispersionModel::debrisCloud,
+        fcm::CloudDispersionModel::chainReaction
+    };
+    for (const auto cloud_model : cloud_models) {
+        const auto settings = make_settings(cloud_model, fcm::ODEsolver::AB2, false, false);
+        const auto [params, meteoroid, f, rho_a] = test_params(settings, 1e4, false);
+        const double ground_height = 10e3;
+        const double start_height = 70e3;
+        const auto [dEdz, result] = fcm::solve_entry(meteoroid, start_height, ground_height,
+                                                    rho_a, params, *settings, true);
+        for (size_t i = 1; i < dEdz.size() - 1; i++) {
+            if (dEdz[i-1] > 0 && dEdz[i] > 0 && dEdz[i+1] > 0) {
+                BOOST_TEST(dEdz[i-1] / dEdz[i] == dEdz[i] / dEdz[i+1]);
+            }
+        }
+    }
+}
 
-// }
+BOOST_AUTO_TEST_CASE(it_works, * utf::tolerance(1e-8))
+{
+    const auto settings = make_settings();
+    auto [params, m, fragment, rho_a] = test_params(settings, 1e4);
+    const double start_height = 100e3;
+    const double ground_height = 10e3;
+    fcm::dEdzInterpolator dEdz_vector(fragment, start_height, ground_height, settings->dh);
+    const auto z0 = params.Rp + fragment.z();
 
-// BOOST_AUTO_TEST_SUITE_END()
+    fcm::offset descend {-5, 0, 0, 0, 0, -1e3, 0, 0};
+    fcm::offset ascend {+5, 0, 0, 0, 0, +2e3, 0, 0};
+
+    fragment += descend;
+    dEdz_vector.add_dedz(fragment);
+
+    const auto values1 = dEdz_vector.values();
+    const auto z_index_0 = dEdz_vector.z_index_0();
+    const double E1 = 0.5 * m.mass() * std::square(m.velocity)
+                      - m.mass() * params.g0 * std::square(params.Rp) / z0;
+    const double E2 = 0.5 * m.mass() * std::square(m.velocity + descend.dv)
+                      - m.mass() * params.g0 * std::square(params.Rp) / (z0 + descend.dz);
+    const double dEdz1 = (E2 - E1) / descend.dz;
+
+    const size_t max_index = std::floor(-descend.dz / settings->dh);
+    BOOST_TEST(z_index_0 == std::floor((start_height - z0 + params.Rp) / settings->dh));
+    BOOST_TEST(values1.size() == max_index + 1);
+    BOOST_TEST(values1[0] == 0);
+    BOOST_TEST(values1[max_index] == dEdz1);
+    for (size_t i = 1; i < max_index; i++) {
+        BOOST_TEST(values1[i] > 0);
+        BOOST_TEST(values1[i] < dEdz1);
+    }
+
+    fragment += ascend;
+    dEdz_vector.add_dedz(fragment);
+
+    const auto values2 = dEdz_vector.values();
+    const auto z_index_1 = dEdz_vector.z_index_0();
+    const double E3 = 0.5 * m.mass() * std::square(m.velocity + descend.dv + ascend.dv)
+                      - m.mass() * params.g0 * std::square(params.Rp) / (z0 + descend.dz + ascend.dz);
+    const double dEdz2 = (E3 - E2) / ascend.dz;
+    BOOST_TEST_REQUIRE(dEdz2 < dEdz1);
+    BOOST_TEST(z_index_1 == std::ceil((start_height - z0 - descend.dz - ascend.dz + params.Rp) / settings->dh));
+    BOOST_TEST(values2.size() = max_index + 1 + z_index_0 - z_index_1);
+    BOOST_TEST(values2[0] == dEdz2);
+    BOOST_TEST(values2[max_index + z_index_0 - z_index_1] == dEdz1);
+    BOOST_TEST(values2[z_index_0 - z_index_1] == dEdz1 + (dEdz2 - dEdz1) * (-descend.dz) / ascend.dz);
+    for (size_t i = 1; i < std::max(z_index_0 - z_index_1, max_index); i++) {
+        if (i < z_index_0 - z_index_1) {
+            BOOST_TEST(values2[i] > 0);
+            BOOST_TEST(values2[i] > dEdz2);
+        }
+        if (i < max_index) {
+            BOOST_TEST(values2[i + z_index_0 - z_index_1] > values1[i + z_index_0 - z_index_1]);
+        }
+    }
+}
+
+BOOST_AUTO_TEST_SUITE_END()
 BOOST_AUTO_TEST_SUITE(atmospheric_entry)
 
 BOOST_AUTO_TEST_CASE(normal_entry)
