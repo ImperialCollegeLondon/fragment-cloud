@@ -57,7 +57,8 @@ offset fcm::dfdt(const Fragment& fragment, const FCM_params& params, const FCM_s
             result.dr = drdt_chainreaction(0, 1, fragment.radius(), fragment.mass(), result.dm,
                                         params.cloud_disp_coeff, fragment.density());
         } else {
-            result.dr = result.d2r = 0;
+	    result.d2r = 0;
+	    result.dr = drdt_ablation(fragment.radius(), fragment.mass(), result.dm);
         }
         
     } else {

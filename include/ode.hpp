@@ -427,7 +427,7 @@ constexpr auto dvdt(double C_D, double rp, double A, double m, double g, double 
  * 
  * @param C_ab : ablaction coefficient
  * @param rp : ram pressure, in [Pa]
- * @param A : meteoroid area perpendicular to tranjectory, in [m^2]
+ * @param A : meteoroid area perpendicular to trajectory, in [m^2]
  * @param v : meteoroid velocity, in [m/s]
  */
 constexpr auto dmdt(double C_ab, double rp, double A, double v) noexcept {
@@ -591,6 +591,19 @@ constexpr auto drdt_chainreaction(double rp, double strength, double r, double m
     return result;
 }
 
+/**
+ * @brief Derivative of radius of solid fragment undergoing ablation in [m/s]
+ * 
+ * Source: Avramenko et al, 2014 [https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1002/2013JD021028]
+ * 
+ * @param r : meteoroid radius, in [m]
+ * @param m : meteoroid mass, in [kg]
+ * @param dmdt : ablation mass loss, in [kg/s]
+ */
+constexpr auto drdt_ablation(double r, double m, double dmdt) noexcept {
+    return r/m * dmdt/3;
+}
+  
 } // namespace fcm
 
 #endif // !ODE_HPP
