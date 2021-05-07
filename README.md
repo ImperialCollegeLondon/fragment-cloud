@@ -125,11 +125,11 @@ Using these coordinates, the meteoroid physics equations are:
 * <img src="https://render.githubusercontent.com/render/math?math=\frac{dm}{dt}=-\frac{C_\mathrm{ab}}{2}\rho_av^3\pi%20r^2">
 * <img src="https://render.githubusercontent.com/render/math?math=\frac{d\theta}{dt}=\frac{g\cos(\theta)}{v}-\frac{C_L\rho_a\pi%20r^2v}{2m}-\frac{v\cos(\theta)}{R_p%2Bz}">
 * <img src="https://render.githubusercontent.com/render/math?math=\frac{dz}{dt}=-v\sin(\theta)">
-* <img src="https://render.githubusercontent.com/render/math?math=\frac{dx}{dt} = v\cos(\theta)\cos(\phi)\frac{R_p}{R_p%2Bz}">
-* <img src="https://render.githubusercontent.com/render/math?math=\frac{dy}{dt}=v\cos(\theta)\sin(\phi)\frac{R_p}{R_p%2Bz}">
+* <img src="https://render.githubusercontent.com/render/math?math=\frac{dx}{dt}=v\cos(\theta)\cos(\phi)\frac{R_p%2Bh_0}{R_p%2Bz}">
+* <img src="https://render.githubusercontent.com/render/math?math=\frac{dy}{dt}=v\cos(\theta)\sin(\phi)\frac{R_p%2Bh_0}{R_p%2Bz}">
 * <img src="https://render.githubusercontent.com/render/math?math=\frac{d\phi}{dt}=0">
 
-<img src="https://render.githubusercontent.com/render/math?math=\rho_a"> is the air density, <img src="https://render.githubusercontent.com/render/math?math=g"> the gravitational accelecation, <img src="https://render.githubusercontent.com/render/math?math=C_D\,,\%20C_\mathrm{ab}\,,\%20C_L\,"> are the coefficients of drag, ablation and lift respectively. <img src="https://render.githubusercontent.com/render/math?math=R_p"> is the planet's radius.
+<img src="https://render.githubusercontent.com/render/math?math=\rho_a"> is the air density, <img src="https://render.githubusercontent.com/render/math?math=g"> the gravitational accelecation, <img src="https://render.githubusercontent.com/render/math?math=C_D\,,\%20C_\mathrm{ab}\,,\%20C_L\,"> are the coefficients of drag, ablation and lift respectively. <img src="https://render.githubusercontent.com/render/math?math=R_p"> is the planet's radius, and <img src="https://render.githubusercontent.com/render/math?math=h_0"> is the ground elevation above standard 0.
 
 ### Break Up
 
@@ -196,9 +196,11 @@ variable | description | variable | description
 <img src="https://render.githubusercontent.com/render/math?math=m"> | impactor mass | <img src="https://render.githubusercontent.com/render/math?math=\rho_t"> | terrain density
 <img src="https://render.githubusercontent.com/render/math?math=g_0"> | gravitational accelecation | <img src="https://render.githubusercontent.com/render/math?math=r"> | impactor radius
 <img src="https://render.githubusercontent.com/render/math?math=v_z"> | impactor vertical velocity | <img src="https://render.githubusercontent.com/render/math?math=\rho_i"> | impactor density
-<img src="https://render.githubusercontent.com/render/math?math=Y"> | terrain cohesive strength
+<img src="https://render.githubusercontent.com/render/math?math=Y"> | terrain cohesive strength | <img src="https://render.githubusercontent.com/render/math?math=f_\mathrm{rim}"> | rim-to-rim factor
 
-The parameters <img src="https://render.githubusercontent.com/render/math?math=K_1,K_2,\mu,\nu"> are user-definable numbers in the Holsapple equations.
+The parameters <img src="https://render.githubusercontent.com/render/math?math=K_r,K_1,K_2,\mu,\nu">
+are user-definable numbers in the Holsapple equations. The rim-to-rim factor expresses that
+from a top-down perspective, the crater size is measured including the rim around the crater formed by the ejecta.
 Defaults for two ground types are provided in the `fcm` module.
 
 #### Crater merging

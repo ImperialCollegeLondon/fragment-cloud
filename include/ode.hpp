@@ -296,7 +296,7 @@ constexpr auto kinetic_energy(double m, double v) noexcept {
  * @param m : mass, in [kg]
  * @param v : velocity, in [m/s]
  * @param z : height above sea level, in [m]
- * @param g0 : gravitational acceleration at sea level, in [m/s^2]
+ * @param g0 : gravitational acceleration at standard 0, in [m/s^2]
  * @param Rp : radius of the planet, in [m]
  */
 constexpr auto energy(double m, double v, double z, double g0, double Rp) noexcept {
@@ -491,10 +491,11 @@ constexpr auto dzdt(double v, double sin_theta) noexcept {
  *                    pi/2 = vertical, downwards, 0 = horizontal
  * @param cos_phi : cos(phi), where phi is the trajectory angle in the xy-plane w.r.t. initial tranjectory.
  * @param Rp : planet radius, in [m]
- * @param z : height above sea level, in [m]
+ * @param z : height above standard 0, in [m]
+ * @param h0 : ground elevation above standard 0, in [m]
  */
-constexpr auto dxdt(double v, double cos_theta, double cos_phi, double Rp, double z) noexcept {
-    return vx(v, cos_theta, cos_phi) / (1. + z/Rp);
+constexpr auto dxdt(double v, double cos_theta, double cos_phi, double Rp, double z, double h0=0) noexcept {
+    return vx(v, cos_theta, cos_phi) * (Rp + h0) / (Rp + z);
 }
 
 /**
@@ -516,9 +517,12 @@ constexpr auto dxdt_flat(double v, double cos_theta, double cos_phi) noexcept {
  * @param cos_theta : cos(theta), where theta is the trajectory angle w.r.t. horizon.
  *                    pi/2 = vertical, downwards, 0 = horizontal
  * @param sin_phi : sin(phi), where phi is the trajectory angle in the xy-plane w.r.t. initial tranjectory.
+ * @param Rp : planet radius, in [m]
+ * @param z : height above standard 0, in [m]
+ * @param h0 : ground elevation above standard 0, in [m]
  */
-constexpr auto dydt(double v, double cos_theta, double sin_phi, double Rp, double z) noexcept {
-    return vy(v, cos_theta, sin_phi) / (1. + z/Rp);
+constexpr auto dydt(double v, double cos_theta, double sin_phi, double Rp, double z, double h0=0) noexcept {
+    return vy(v, cos_theta, sin_phi) * (Rp + h0) / (Rp + z);
 }
 
 /**

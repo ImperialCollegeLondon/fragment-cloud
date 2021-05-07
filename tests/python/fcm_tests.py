@@ -30,7 +30,7 @@ def test_dedz():
     interpolated_values = interpolation_function(combined.z.to_numpy())
     real_values = combined.dEdz.to_numpy()
     
-    np.testing.assert_allclose(interpolated_values[1:-4], real_values[1:-4], rtol=5e-2)
+    np.testing.assert_allclose(interpolated_values[1:-4], real_values[1:-4], atol=1.1e-3)
 
 
 def test_fragmentation():
@@ -78,7 +78,7 @@ def test_fragmentation():
                 indices = ["x", "y", "z", "h"] # TODO: add "ram pressure"?
                 pd.testing.assert_series_equal(first_child_state[indices], last_parent_state[indices])
             
-            assert last_parent_state.m >= all_children_mass
+            assert (1+1e-10) * last_parent_state.m >= all_children_mass
 
     for ID, cloud in results.clouds.items():
         pd.testing.assert_series_equal(cloud.timeseries.iloc[-1],

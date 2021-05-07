@@ -157,9 +157,11 @@ struct Meteoroid {
  * @param fragment: meteoroid fragment
  * @param params: simulation parameters
  * @param settings: simulation settings
+ * @param z_ground: ground elevation above standard 0, in [m]
  * @return offset: vector of d(state)/dt values
  */
-offset dfdt(const Fragment& fragment, const FCM_params& params, const FCM_settings& settings);
+offset dfdt(const Fragment& fragment, const FCM_params& params, const FCM_settings& settings,
+            const double z_ground);
 
 
 class dEdzInterpolator {

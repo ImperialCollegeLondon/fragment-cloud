@@ -9,6 +9,7 @@
 * Implement ablation model as in [Crawford (1996)](https://doi.org/10.1017/S0252921100115490)?
 * Debris cloud model mentions that when ram pressure drops below initial strength, the tiny fragments form individual bow shocks. -> implement this? How?
 * How do we handle the density of porous meteoroids? Do we have to differentiate between average density (including pores) and material density (without the pores) depending on where we use the density?
+* `dE/dz` calculation edge case: When a fragment is ascending and getting slower (losing energy due to friction), `dE/dz` is negative! If it's descending and getting slower, `dE/dz` is positive. => Define otherwise? E.g. `dE/dz = (E_2 - E_1) / |z_2 - z_1|` instead of `dE/dz = (E_2 - E_1) / (z_2 - z_1)`?
 
 ## Implementation
 
