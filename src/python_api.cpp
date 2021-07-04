@@ -227,13 +227,29 @@ BOOST_PYTHON_MODULE(core)
 {
     Py_Initialize();
     np::initialize();
+    
+    py::enum_<ODEsolver>("OdeSolver")
+        .value("forward_euler", ODEsolver::forwardEuler)
+        .value("improved_euler", ODEsolver::improvedEuler)
+        .value("RK4", ODEsolver::RK4)
+        .value("AB2", ODEsolver::AB2);
+    
+    py::enum_<CloudDispersionModel>("CloudDispersionModel")
+        .value("pancake", CloudDispersionModel::pancake)
+        .value("debris_cloud", CloudDispersionModel::debrisCloud)
+        .value("chain_reaction", CloudDispersionModel::chainReaction);
+
+    py::enum_<AblationModel>("AblationModel")
+        .value("meteoroid", AblationModel::meteoroid)
+        .value("meteoroid_const_r", AblationModel::meteoroid_const_r);
 
     py::class_<FCM_settings>(
         "FcmSettings",
-        py::init<CloudDispersionModel, ODEsolver, bool, bool, double, double, bool>()
+        py::init<CloudDispersionModel, ODEsolver, double, double, bool, bool, bool, AblationModel>()
     ).def_readwrite("cloud_dispersion_model", &FCM_settings::cloud_dispersion_model)
         .def_readwrite("ode_solver", &FCM_settings::ode_solver)
         .def_readwrite("flat_planet", &FCM_settings::flat_planet)
+        .def_readwrite("ablation_model", &FCM_settings::ablation_model)
         .def_readwrite("fixed_timestep", &FCM_settings::fixed_timestep)
         .def_readwrite("precision", &FCM_settings::precision)
         .def_readwrite("dh", &FCM_settings::dh)
@@ -298,17 +314,6 @@ BOOST_PYTHON_MODULE(core)
         .def_readwrite("cloud_mass_frac", &PyMeteoroid::cloud_mass_frac)
         .add_property("mass", &PyMeteoroid::mass)
         .add_property("groups", &PyMeteoroid::groups);
-    
-    py::enum_<ODEsolver>("OdeSolver")
-        .value("forward_euler", ODEsolver::forwardEuler)
-        .value("improved_euler", ODEsolver::improvedEuler)
-        .value("RK4", ODEsolver::RK4)
-        .value("AB2", ODEsolver::AB2);
-    
-    py::enum_<CloudDispersionModel>("CloudDispersionModel")
-        .value("pancake", CloudDispersionModel::pancake)
-        .value("debris_cloud", CloudDispersionModel::debrisCloud)
-        .value("chain_reaction", CloudDispersionModel::chainReaction);
 
     py::def("solve_impact", solve_impact);
     py::def("max_seed", max_seed);

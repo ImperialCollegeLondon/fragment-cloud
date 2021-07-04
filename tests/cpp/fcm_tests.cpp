@@ -26,9 +26,8 @@ namespace tt = boost::test_tools;
 auto make_settings(const fcm::CloudDispersionModel cloud_model=fcm::CloudDispersionModel::debrisCloud,
                    const fcm::ODEsolver solver=fcm::ODEsolver::AB2, const bool flat_earth=false,
                    const bool fixed_timestep=true) {
-    return std::make_shared<const fcm::FCM_settings>(cloud_model, solver, flat_earth,
-                                                     fixed_timestep, 1e-2,
-                                                     1000, true);
+    return std::make_shared<const fcm::FCM_settings>(cloud_model, solver, 1e-2, 1000, true, flat_earth,
+                                                     fixed_timestep);
 }
 
 auto test_params(const std::shared_ptr<const fcm::FCM_settings>& settings, const double strength,
@@ -344,7 +343,7 @@ BOOST_AUTO_TEST_CASE(does_not_finish_bug)
     };
 
     const fcm::FCM_settings settings(fcm::CloudDispersionModel::debrisCloud, fcm::ODEsolver::AB2,
-                                     false, false, 1e-2, 1000, false);
+                                     1e-2, 1000, false, false, false, fcm::AblationModel::meteoroid_const_r);
     const fcm::FCM_crater_coeff crater_coeff(0.75, 1.5e3, 1e4, 0.15, 1, 1.1, 0.4, 1.0/3.0, 1.3);
     const fcm::FCM_params p(3.711, 3389.5e3, 1e-8, 1, 5e-4, 330e6, 1, 1, 0, 0.9, crater_coeff);
 
