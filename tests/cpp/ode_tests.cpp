@@ -253,10 +253,10 @@ BOOST_AUTO_TEST_CASE(vx_dxdt, * utf::tolerance(1e-8))
 {
     const TestValues p;
     const double expected_flat = 47.4159881779;
-    const double expected_curved = expected_flat * 0.9922130509;
+    const double expected_curved = expected_flat * 0.9929917458;
     const auto result_dxdt_flat = fcm::dxdt_flat(p.v, std::cos(p.theta), std::cos(p.phi));
     const auto result_dxdt_z0 = fcm::dxdt(p.v, std::cos(p.theta), std::cos(p.phi), p.Rp, 0);
-    const auto result_dxdt = fcm::dxdt(p.v, std::cos(p.theta), std::cos(p.phi), p.Rp, p.z);
+    const auto result_dxdt = fcm::dxdt(p.v, std::cos(p.theta), std::cos(p.phi), p.Rp, p.z, 5e3);
     const auto result_vx = fcm::vx(p.v, std::cos(p.theta), std::cos(p.phi));
 
     BOOST_TEST(result_dxdt_flat == expected_flat);
@@ -269,10 +269,10 @@ BOOST_AUTO_TEST_CASE(vy_dydt, * utf::tolerance(1e-8))
 {
     const TestValues p;
     const double expected_flat = -25.9034724;
-    const double expected_curved = expected_flat * 0.9922130509;
+    const double expected_curved = expected_flat * 0.991434356;
     const auto result_dydt_flat = fcm::dydt_flat(p.v, std::cos(p.theta), std::sin(p.phi));
     const auto result_dydt_z0 = fcm::dydt(p.v, std::cos(p.theta), std::sin(p.phi), p.Rp, 0);
-    const auto result_dydt = fcm::dydt(p.v, std::cos(p.theta), std::sin(p.phi), p.Rp, p.z);
+    const auto result_dydt = fcm::dydt(p.v, std::cos(p.theta), std::sin(p.phi), p.Rp, p.z, -5e3);
     const auto result_vy = fcm::vy(p.v, std::cos(p.theta), std::sin(p.phi));
 
     BOOST_TEST(result_dydt_flat == expected_flat);

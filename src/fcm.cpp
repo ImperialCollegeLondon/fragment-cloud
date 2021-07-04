@@ -24,7 +24,8 @@ using namespace fcm;
 
 // TODO: Avoid ifs/switch in here somehow?
 // TODO: Declare noexcept, since cloud cannot be anything else, so no exception should be thrown?
-offset fcm::dfdt(const Fragment& fragment, const FCM_params& params, const FCM_settings& settings) {
+offset fcm::dfdt(const Fragment& fragment, const FCM_params& params, const FCM_settings& settings,
+                 const double z_ground) {
     const auto A = fragment.area();
     const auto cos_theta = fragment.cos_theta();
     const auto sin_theta = fragment.sin_theta();
@@ -46,8 +47,10 @@ offset fcm::dfdt(const Fragment& fragment, const FCM_params& params, const FCM_s
     else {
         result.dtheta = dthetadt(grav_acc, cos_theta, fragment.velocity(), params.lift_coeff,
                                  fragment.rp(), A, fragment.mass(), params.Rp, fragment.z());
-        result.dx = dxdt(fragment.velocity(), cos_theta, fragment.cos_phi(), params.Rp, fragment.z());
-        result.dy = dydt(fragment.velocity(), cos_theta, fragment.sin_phi(), params.Rp, fragment.z());
+        result.dx = dxdt(fragment.velocity(), cos_theta, fragment.cos_phi(), params.Rp,
+                         fragment.z(), z_ground);
+        result.dy = dydt(fragment.velocity(), cos_theta, fragment.sin_phi(), params.Rp,
+                         fragment.z(), z_ground);
     }
 
     if (!fragment.is_cloud()) {
@@ -98,7 +101,8 @@ dEdzInterpolator::dEdzInterpolator(const Fragment& fragment, const double z_star
 
     this->z_index_0_ = this->z_index_ = std::floor((z_start - fragment.z()) / dh);
     this->z_index_max_ = std::floor((z_start - z_ground) / dh) + 1;
-    this->dEdz_prev_ = 0;
+    this->dEdz_prev_ = fragment.dEdz();
+    this->values_.push_back(fragment.dEdz());
 }
 
 void dEdzInterpolator::add_dedz(const Fragment& fragment) {
@@ -275,7 +279,7 @@ std::pair<
     if (z_ground <= -params.Rp) throw std::invalid_argument("z_ground must be > -Rp");
 
     const std::function<offset(const Fragment&)> df = [&](const Fragment& fragment){
-        return fcm::dfdt(fragment, params, settings);
+        return fcm::dfdt(fragment, params, settings, z_ground);
     };
 
     std::function<Fragment(Fragment&&)> step;
@@ -429,7 +433,7 @@ std::pair<
         if (calculate_dEdz) {
             assert(dEdz_fragment.first >= 0);
             assert(dEdz_fragment.first + dEdz_fragment.second.size() <= dEdz.size());
-            for (size_t i = 0; i < dEdz_fragment.second.size(); i++) {
+            for (size_t i = 1; i < dEdz_fragment.second.size(); i++) {
                 dEdz[i + dEdz_fragment.first] += dEdz_fragment.second[i];
             }
         }
