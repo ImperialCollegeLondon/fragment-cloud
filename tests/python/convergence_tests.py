@@ -5,7 +5,6 @@ if sys.path[0] != top_dir:
 
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 
 import fcm
 import fcm.atmosphere as atm
@@ -89,7 +88,8 @@ def test_pancake_meteoroid_analysis(generate_plots=False):
                 assert advantage_adaptive > 2,\
                     "adaptive advantage = {:.2f}".format(advantage_adaptive)
         
-        if generate_plots:            
+        if generate_plots:
+            import matplotlib.pyplot as plt     
             fig, axes = plt.subplots(2, 2, sharex=True, sharey=True, figsize=(8, 7))
             axes = axes.flatten()
 
@@ -107,5 +107,4 @@ def test_pancake_meteoroid_analysis(generate_plots=False):
     
 ###################################################
 if __name__ == "__main__":
-    
     test_pancake_meteoroid_analysis(True)
