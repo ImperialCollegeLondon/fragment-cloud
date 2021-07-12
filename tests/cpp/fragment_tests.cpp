@@ -37,7 +37,7 @@ struct TestParams {
     const double sin_phi = std::sin(-0.2);
 
     const std::shared_ptr<const FCM_settings> settings = std::make_shared<const FCM_settings>(
-        CloudDispersionModel::debrisCloud, ODEsolver::AB2, false, false, 1e-2, 1000, true
+        CloudDispersionModel::debrisCloud, ODEsolver::AB2, 1e-2, 1000, true, false, false
     );
     const FCM_crater_coeff crater_coeff = FCM_crater_coeff(0.75, 1.5e3, 1e4, 0.15, 1, 1.1, 0.4,
                                                            0.33, 1.3);

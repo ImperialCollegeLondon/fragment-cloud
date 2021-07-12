@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 
 from . import _cpp_wrapper as cpp
-from .models import *
+from .models import * 
 from .models import _check_number
 
 
@@ -372,6 +372,10 @@ class FCMparameters:
         Maximum aerodynamic strength for a fragment
         max_strength > 0
         default : 3.3e5 ; see Popova et al. (2013) [https://doi.org/10.1126/science.1242642]
+
+    ablation_model: str, optional
+        Ablation model used for meteoroid and fragments (not for debris clouds)
+        default: 'chain_reaction' ; used by Avramenko et al. (2014) [https://doi.org/10.1002/2013JD021028]
     
     frag_model : str, optional
         Fragmentation model; one of FragmentationModel enum
@@ -442,9 +446,9 @@ class FCMparameters:
     """
     def __init__(self, g0, Rp, atmospheric_density,
                  ablation_coeff=5e-9, drag_coeff=1.5, lift_coeff=5e-4, max_strength=3.3e5,
-                 frag_model="IW", frag_velocity_coeff=0.19/1.5, cloud_disp_model="DCM",
-                 cloud_disp_coeff=None, strengh_scaling_disp=0.5, fragment_mass_disp=0.9,
-                 min_crater_radius=0.5, cratering_params="cohesive_soil",
+                 ablation_model='chain_reaction', frag_model="IW", frag_velocity_coeff=0.19/1.5,
+                 cloud_disp_model="DCM", cloud_disp_coeff=None, strengh_scaling_disp=0.5,
+                 fragment_mass_disp=0.9, min_crater_radius=0.5, cratering_params="cohesive_soil",
                  dh=10, variable_timestep=True, precision=1e-4, timestepper="AB2"):
         
         self.g0 = _check_number(g0, "g0", lower_bound=0)
@@ -474,6 +478,7 @@ class FCMparameters:
         self.drag_coeff = _check_number(drag_coeff, "drag_coeff", lower_bound=0, lower_incl=True)
         self.lift_coeff = _check_number(lift_coeff, "lift_coeff", lower_bound=0, lower_incl=True)
         self.max_strength = _check_number(max_strength, "max_strength", lower_bound=0)
+        self.ablation_model = AblationModel(ablation_model)
         self.frag_model = FragmentationModel(frag_model)
         self.frag_velocity_coeff = _check_number(frag_velocity_coeff, "frag_velocity_coeff",
                                                  lower_bound=0)

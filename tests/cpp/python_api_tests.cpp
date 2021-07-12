@@ -158,8 +158,8 @@ BOOST_AUTO_TEST_SUITE(exposedFunctions)
 
 BOOST_AUTO_TEST_CASE(solveImpact)
 {
-    fcm::FCM_settings s(fcm::CloudDispersionModel::debrisCloud, fcm::ODEsolver::AB2, false, false,
-                        0.001, 10, true);
+    fcm::FCM_settings s(fcm::CloudDispersionModel::debrisCloud, fcm::ODEsolver::AB2, 0.001, 10,
+                        false, false, true);
     const fcm::FCM_crater_coeff crater_coeff(0.75, 1.5e3, 1e4, 0.15, 1, 1.1, 0.4, 0.33, 1.3);
     const fcm::FCM_params p(5, 6371e3, 2e-9, 0.5, 5e-4, 330e6, 0.2, 1.5, 1, 0.9, crater_coeff);
 

@@ -1,5 +1,5 @@
-__all__ = ["Fragment", "Timestepper", "CloudDispersionModel", "FragmentationModel", "GroundType",
-           "CrateringParams", "FcmResults"]
+__all__ = ["AblationModel", "Fragment", "Timestepper", "CloudDispersionModel", "FragmentationModel",
+           "GroundType", "CrateringParams", "FcmResults"]
 
 from enum import Enum
 from collections import namedtuple
@@ -36,6 +36,20 @@ class Timestepper(Enum):
     improved_euler = 'improved_euler'
     RK4            = 'RK4'      # 4th order explicit Runge-Kutta scheme
     AB2            = 'AB2'      # 2nd order explicit multi-step Adams-Bashforth scheme
+
+
+###################################################
+class AblationModel(Enum):
+    chain_reaction = 'chain_reaction'  # part of the Chain Reaction Model before meteoroid breakup,
+                                       # which keeps the meteoroid's shape spherical
+                                       #   by Avramenko et al. (2014) [https://doi.org/10.1002/2013JD021028]
+
+    constant_r = 'constant_r'          # radius perpendicular to trajectory remains constant, 
+                                       # as described in the 'pancake' and 'debris cloud' models
+                                       #  by Chyba et al. (1993) [https://doi.org/10.1038/361040a0]
+                                       #  and by Hills and Goda (1993) [https://doi.org/10.1086/116499]
+
+    # TODO: add comet model by Crawford, 1996 [https://doi.org/10.1017/S0252921100115490] to the numerical solver
 
 
 ###################################################
