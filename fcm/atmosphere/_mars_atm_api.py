@@ -81,10 +81,10 @@ def _request_url(latitude, longitude, timestamp, zkey):
     if isinstance(timestamp, datetime.datetime):
         jdate += timestamp.hour / 24 + timestamp.minute / (24*60) + timestamp.second / (24*3600)
     
-    url = BASE_URL + "cgi-bin/mcdcgi.py?"
+    url = BASE_URL + "cgi-bin/mcdcgi.py?&datekeyhtml=0&localtime=0"
     url += "&julian={:.5f}&latitude={:.9f}&longitude={:.9f}".format(jdate, latitude, longitude)
-    url += "&altitude=all&zkey="+str(zkey)+"&var1=rho&colorm=jet"
-    
+    url += "&altitude=all&zonmean=off&hrkey=1&zkey="+str(zkey)+"&var1=rho&colorm=jet"
+
     return url
 
 
