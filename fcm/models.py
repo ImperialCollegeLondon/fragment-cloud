@@ -84,6 +84,7 @@ class GroundType(Enum):
     hard_soil = "hard_soil"
     cohesionless_material = "cohesionless_material"
     cohesive_soil = "cohesive_soil"
+    dry_soil = "dry_soil"
 
 
 ###################################################
