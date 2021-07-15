@@ -16,7 +16,7 @@ BASE_URL = "http://www-mars.lmd.jussieu.fr/mcd_python/"
 
 
 ###################################################
-def martian_atmosphere_api(latitude, longitude, timestamp):
+def martian_atmosphere_api(latitude, longitude, timestamp, zkey=2):
     """Loads atmospheric density data for any coordinates on Mars for a given timestamp.
     The timestamp is important, since the density data varies significantly with Martian seasons.
     
@@ -32,30 +32,48 @@ def martian_atmosphere_api(latitude, longitude, timestamp):
         
     timestamp : Union[datetime.date, datetime.datetime]
         timestamp for which to request the data
-    
+
+    zkey : int
+        Key for altitude definition (2 is default)
+        1: xz is the radial distance from the center of the planet (km).
+        2: xz is the altitude above the Martian zero datum (Mars geoid or “areoid”) (km).
+        3: xz is the altitude above the local surface (km).
+        4: xz is the pressure level (kPa).
+        5: xz is the altitude above reference radius (3,396.106 km) (km).    
+
     Returns
     -------
     pandas.Series
         atmoshperic density (kg/m^3)
         index = altitude above MOLA_0 (km)
     """
+
+    # Define a dictionary of altitude types (2 is default)
+    altitude_type = {1: "radial distance from the center of the planet (km)",
+                     2: "altitude above MOLA_0 (km)",
+                     3: "altitude above the local surface (km)",
+                     4: "pressure level (kPa)",
+                     5: "altitude above reference radius (km)"}
+    
     latitude = _check_number(latitude, "latitude", True, -90, True, 90, True)
     longitude = _check_number(longitude, "longitude", True, -180, False, 180, True)
     if not isinstance(timestamp, (datetime.date, datetime.datetime)):
         raise TypeError("timestamp must be a date or datetime object")
     
-    url = _request_url(latitude, longitude, timestamp)
+    url = _request_url(latitude, longitude, timestamp, zkey)
     txt_url = _get_txt_url(url)
     dataframe = _load_and_parse_txt_file(txt_url)
-    
-    dataframe.index *= 1e-3
-    dataframe.index.name = "altitude above MOLA_0 (km)"
+
+    # MCD provides results in m (or Pa); convert to km (kPa) and
+    # set appropriate index name
+    dataframe.index *= 1e-3 
+    dataframe.index.name = altitude_type[zkey]
     
     return dataframe.iloc[:, 0]
 
 
 ###################################################
-def _request_url(latitude, longitude, timestamp):
+def _request_url(latitude, longitude, timestamp, zkey):
     """Converts latitude, longitude and timestamp into a request url to the website"""
     
     jdate = sum(jdcal.gcal2jd(timestamp.year, timestamp.month, timestamp.day))
@@ -65,7 +83,7 @@ def _request_url(latitude, longitude, timestamp):
     
     url = BASE_URL + "cgi-bin/mcdcgi.py?"
     url += "&julian={:.5f}&latitude={:.9f}&longitude={:.9f}".format(jdate, latitude, longitude)
-    url += "&altitude=all&zkey=2&var1=rho&colorm=jet"
+    url += "&altitude=all&zkey="+str(zkey)+"&var1=rho&colorm=jet"
     
     return url
 
@@ -102,7 +120,7 @@ def _load_and_parse_txt_file(url, timeout=2):
     assert atmosphere.shape[1] == 1,\
         "expected only two columns, got {:d}".format(atmosphere.shape[1] + 1)
     atmosphere.columns = ["Density (kg/m3)"]
-    atmosphere.index.name = "altitude above MOLA_0 (m)"
+    atmosphere.index.name = "altitude"
     
     atmosphere.dropna(axis=0, how="any", inplace=True)
     
