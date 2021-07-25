@@ -2,6 +2,7 @@ build/
 debug/
 release/
 dist/
+venv/
 .ipynb_checkpoints/
 setup.py
 

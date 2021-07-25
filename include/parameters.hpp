@@ -60,6 +60,12 @@ enum class AblationModel {
      * [https://www.sciencedirect.com/science/article/pii/001910358090072X]
      */
     meteoroid,
+
+    /**
+     * @brief Same as AblationModel::meteoroid, but ablation doesn't change
+     * the fragment's radius when projected onto a plane perpendicular to trajectory.
+     */
+    meteoroid_const_r,
     
     /**
      * @brief Model for comets.
@@ -139,11 +145,11 @@ struct FCM_settings {
      */
     unsigned int max_iterations;
 
-    FCM_settings(CloudDispersionModel cloud_model, ODEsolver solver, bool flat_planet,
-                 bool fixed_timestep, double precision, double dh, bool record_data,
-                 double cloud_stopping_criterion=1e-4, unsigned int max_iterations=1e6,
-                 FragmentationModel frag_model=FragmentationModel::independentWake,
-                 AblationModel ablation_model=AblationModel::meteoroid) :
+    FCM_settings(CloudDispersionModel cloud_model, ODEsolver solver, double precision, double dh, bool record_data,
+                 bool flat_planet=false, bool fixed_timestep=false,
+                 AblationModel ablation_model=AblationModel::meteoroid,
+                 unsigned int max_iterations=1e6, double cloud_stopping_criterion=1e-4,
+                 FragmentationModel frag_model=FragmentationModel::independentWake) :
         fragmentation_model(frag_model), cloud_dispersion_model(cloud_model), ode_solver(solver),
         ablation_model(ablation_model), flat_planet(flat_planet), fixed_timestep(fixed_timestep),
         precision(precision), dh(dh), record_data(record_data),

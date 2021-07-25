@@ -3,6 +3,8 @@ top_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 if sys.path[0] != top_dir:
     sys.path.insert(0, top_dir)
 
+import copy
+
 import numpy as np
 import pandas as pd
 from scipy.interpolate import interp1d
@@ -31,6 +33,24 @@ def test_dedz():
     real_values = combined.dEdz.to_numpy()
     
     np.testing.assert_allclose(interpolated_values[1:-4], real_values[1:-4], atol=1.1e-3)
+
+
+def test_ablation_model():
+    rho_a = atm.exponential(1, 100, 8, 11)
+    model_std = fcm.FCMparameters(g0=9.81, Rp=6371, atmospheric_density=rho_a, cloud_disp_model="CRM",
+                                  timestepper="AB2", precision=1e-3)
+    model_const_r = fcm.FCMparameters(g0=9.81, Rp=6371, atmospheric_density=rho_a, cloud_disp_model="CRM",
+                                      timestepper="AB2", precision=1e-3, ablation_model='constant_r')
+    
+    impactor = fcm.PancakeMeteoroid(velocity=20, angle=40, density=3.3e3, radius=10, strength=100)
+    results_std = fcm.simulate_impact(model_std, impactor, h_start=100, craters=False, timeseries=True)
+    results_const_r = fcm.simulate_impact(model_const_r, impactor, h_start=100, craters=False, timeseries=True)
+
+    # make sure there is some difference, i.e. we're not running the exact same simulation twice
+    assert (results_std.energy_deposition - results_const_r.energy_deposition).abs().max() > 1e-8
+    
+    # it's a big meteoroid, so assert results are very similar
+    pd.testing.assert_series_equal(results_std.energy_deposition, results_const_r.energy_deposition, rtol=1e-3)
 
 
 def test_fragmentation():
@@ -120,6 +140,5 @@ def test_fragmentation():
     
 
 if __name__ == "__main__":
-    test_dedz()
-    test_fragmentation()
+    test_ablation_model()
     
