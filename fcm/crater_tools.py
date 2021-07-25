@@ -1,8 +1,6 @@
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 from scipy.spatial.distance import pdist
-from matplotlib.patches import Circle, Ellipse
 from sklearn.decomposition import PCA
 from sklearn.utils import resample
 
@@ -39,6 +37,9 @@ def plot_craters(craters, crater_color="black", ellipse_color=None, figsize=None
     matplotlib.figure.Figure
 
     """
+    import matplotlib.pyplot as plt
+    from matplotlib.patches import Circle, Ellipse
+
     assert isinstance(craters, pd.DataFrame),\
         "craters must be a pandas.DataFrame instance"
     assert pd.Index(["x", "y", "r"]).isin(craters.columns).all(),\
