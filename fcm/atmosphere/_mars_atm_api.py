@@ -33,7 +33,7 @@ def martian_atmosphere_api(latitude, longitude, timestamp, zkey=2):
     timestamp : Union[datetime.date, datetime.datetime]
         timestamp for which to request the data
 
-    zkey : int
+    zkey : int, optional
         Key for altitude definition (2 is default)
         1: xz is the radial distance from the center of the planet (km).
         2: xz is the altitude above the Martian zero datum (Mars geoid or “areoid”) (km).
@@ -54,7 +54,10 @@ def martian_atmosphere_api(latitude, longitude, timestamp, zkey=2):
                      3: "altitude above the local surface (km)",
                      4: "pressure level (kPa)",
                      5: "altitude above reference radius (km)"}
-    
+
+
+    # Check for valid inputs
+    zkey = _check_number(zkey, "zkey", False, 1, True, 5, True)
     latitude = _check_number(latitude, "latitude", True, -90, True, 90, True)
     longitude = _check_number(longitude, "longitude", True, -180, False, 180, True)
     if not isinstance(timestamp, (datetime.date, datetime.datetime)):
@@ -80,7 +83,9 @@ def _request_url(latitude, longitude, timestamp, zkey):
 
     if isinstance(timestamp, datetime.datetime):
         jdate += timestamp.hour / 24 + timestamp.minute / (24*60) + timestamp.second / (24*3600)
-    
+
+    # Construct URL using Julian date, lat, lon, altitude (and zkey)
+    # var1 is density; zonmean off turns off zonal averaging; hrkey = 1 uses high-res topography
     url = BASE_URL + "cgi-bin/mcdcgi.py?&datekeyhtml=0&localtime=0"
     url += "&julian={:.5f}&latitude={:.9f}&longitude={:.9f}".format(jdate, latitude, longitude)
     url += "&altitude=all&zonmean=off&hrkey=1&zkey="+str(zkey)+"&var1=rho&colorm=jet"
@@ -120,7 +125,6 @@ def _load_and_parse_txt_file(url, timeout=2):
     assert atmosphere.shape[1] == 1,\
         "expected only two columns, got {:d}".format(atmosphere.shape[1] + 1)
     atmosphere.columns = ["Density (kg/m3)"]
-    atmosphere.index.name = "altitude"
     
     atmosphere.dropna(axis=0, how="any", inplace=True)
     
