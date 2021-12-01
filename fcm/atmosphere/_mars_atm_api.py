@@ -32,6 +32,7 @@ def martian_atmosphere_api(latitude, longitude, timestamp, zkey=2):
         
     timestamp : Union[datetime.date, datetime.datetime]
         timestamp for which to request the data
+        time zone = UTC
 
     zkey : int, optional
         Key for altitude definition (2 is default)
@@ -45,7 +46,7 @@ def martian_atmosphere_api(latitude, longitude, timestamp, zkey=2):
     -------
     pandas.Series
         atmoshperic density (kg/m^3)
-        index = altitude above MOLA_0 (km)
+        index = (according to :param zkey)
     """
 
     # Define a dictionary of altitude types (2 is default)
@@ -63,8 +64,8 @@ def martian_atmosphere_api(latitude, longitude, timestamp, zkey=2):
     if not isinstance(timestamp, (datetime.date, datetime.datetime)):
         raise TypeError("timestamp must be a date or datetime object")
     
-    url = _request_url(latitude, longitude, timestamp, zkey)
-    txt_url = _get_txt_url(url)
+    url, params = _request_url(latitude, longitude, timestamp, zkey)
+    txt_url = _get_txt_url(url, params)
     dataframe = _load_and_parse_txt_file(txt_url)
 
     # MCD provides results in m (or Pa); convert to km (kPa) and
@@ -77,29 +78,41 @@ def martian_atmosphere_api(latitude, longitude, timestamp, zkey=2):
 
 ###################################################
 def _request_url(latitude, longitude, timestamp, zkey):
-    """Converts latitude, longitude and timestamp into a request url to the website"""
+    """Convert latitude, longitude, timestamp and zkey into a request url to the website."""
     
     jdate = sum(jdcal.gcal2jd(timestamp.year, timestamp.month, timestamp.day))
 
     if isinstance(timestamp, datetime.datetime):
-        jdate += timestamp.hour / 24 + timestamp.minute / (24*60) + timestamp.second / (24*3600)
+        jdate += timestamp.hour / 24 + timestamp.minute / (24*60) + timestamp.second / (24*3600) \
+                 + timestamp.microsecond / (24*3600*1e6)
 
     # Construct URL using Julian date, lat, lon, altitude (and zkey)
-    # var1 is density; zonmean off turns off zonal averaging; hrkey = 1 uses high-res topography
-    url = BASE_URL + "cgi-bin/mcdcgi.py?&datekeyhtml=0&localtime=0"
-    url += "&julian={:.5f}&latitude={:.9f}&longitude={:.9f}".format(jdate, latitude, longitude)
-    url += "&altitude=all&zonmean=off&hrkey=1&zkey="+str(zkey)+"&var1=rho&colorm=jet"
+    url = BASE_URL + "cgi-bin/mcdcgi.py"
+    params = {'datekeyhtml': "0",
+              'localtime': "0",
+              'julian': f"{jdate:.5f}",
+              'latitude': f"{latitude:.9f}",
+              'longitude': f"{longitude:.9f}",
+              'altitude': "all",
+              'averaging': "off",  # turns off zonal averaging
+              'hrkey': "1",  # uses high-res topography
+              'zkey': f"{zkey:d}",
+              'var1': "rho",  # var1 is density
+              'colorm': "jet"}
 
-    return url
+    return url, params
 
 
 ###################################################
-def _get_txt_url(url, timeout=4, pattern=re.compile("txt/[a-f0-9]+.txt")):
-    """Sends GET request to url with timeout. Extracts url where data file can be downloaded from
-    the response, returns it.
+def _get_txt_url(url, params, timeout=4, pattern=re.compile("txt/[a-f0-9]+.txt")):
     """
-    response = requests.get(url, timeout=timeout)
+    Sends GET request to url with params and timeout.
+    
+    Extracts url where data file can be downloaded from the response, returns it.
+    """
+    response = requests.get(url, params=params, timeout=timeout)
     response.raise_for_status()
+    print("html url:", response.url)
     
     match = pattern.search(response.text)
     if match is None:
@@ -112,7 +125,7 @@ def _get_txt_url(url, timeout=4, pattern=re.compile("txt/[a-f0-9]+.txt")):
 def _load_and_parse_txt_file(url, timeout=2):
     """Loads csv file from url and converts it into a pandas.DataFrame"""
     
-    print("txt url:", url)
+    print("data url:", url)
     buffer = io.BytesIO()
     with requests.get(url, stream=True, timeout=timeout) as r:
         r.raise_for_status()
@@ -125,7 +138,6 @@ def _load_and_parse_txt_file(url, timeout=2):
     assert atmosphere.shape[1] == 1,\
         "expected only two columns, got {:d}".format(atmosphere.shape[1] + 1)
     atmosphere.columns = ["Density (kg/m3)"]
-    
     atmosphere.dropna(axis=0, how="any", inplace=True)
     
     return atmosphere
