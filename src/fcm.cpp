@@ -55,12 +55,11 @@ offset fcm::dfdt(const Fragment& fragment, const FCM_params& params, const FCM_s
 
     if (!fragment.is_cloud()) {
         assert(fragment.rp() <= 1.2*fragment.strength());
-        if (settings.cloud_dispersion_model == CloudDispersionModel::chainReaction) {
-            result.d2r = 0;
-            result.dr = drdt_chainreaction(0, 1, fragment.radius(), fragment.mass(), result.dm,
-                                        params.cloud_disp_coeff, fragment.density());
+        result.d2r = 0;
+        if (settings.ablation_model == AblationModel::meteoroid) {
+            result.dr = drdt_ablation(fragment.radius(), fragment.mass(), result.dm);
         } else {
-            result.dr = result.d2r = 0;
+	        result.dr = 0;
         }
         
     } else {
@@ -179,10 +178,10 @@ auto _solve_fragment(Fragment&& fragment, const double z_start, const double z_g
         .save_df_prev(std::move(df_prev))
         .set_dt_next(dt);
 
-    unsigned int iter = 1;
     bool fragmentation_happened = false;
     dEdzInterpolator dEdz_vector(fragment, z_start, z_ground, settings.dh);
 
+    unsigned int iter = 1;
     while (iter < settings.max_iterations) {
         assert(fragment.velocity() >= 0);
         assert(fragment.mass() > 0);

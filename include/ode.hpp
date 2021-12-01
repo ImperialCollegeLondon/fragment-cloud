@@ -427,7 +427,7 @@ constexpr auto dvdt(double C_D, double rp, double A, double m, double g, double 
  * 
  * @param C_ab : ablaction coefficient
  * @param rp : ram pressure, in [Pa]
- * @param A : meteoroid area perpendicular to tranjectory, in [m^2]
+ * @param A : meteoroid area perpendicular to trajectory, in [m^2]
  * @param v : meteoroid velocity, in [m/s]
  */
 constexpr auto dmdt(double C_ab, double rp, double A, double v) noexcept {
@@ -573,6 +573,21 @@ constexpr auto drdt_debriscloud(double rp, double strength, double alpha, double
 }
 
 /**
+ * @brief Derivative of radius of solid fragment undergoing ablation in [m/s]
+ * 
+ * Source: Avramenko et al, 2014 [https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1002/2013JD021028]
+ * Fragments are approximated as having a perfectly spherical shape. Applying this rate of change to
+ * the fragment's radius will make sure that it keeps its spherical shape when losing mass due to ablation.
+ * 
+ * @param r : meteoroid radius, in [m]
+ * @param m : meteoroid mass, in [kg]
+ * @param dmdt : ablation mass loss, in [kg/s]
+ */
+constexpr auto drdt_ablation(double r, double m, double dmdt) noexcept {
+    return r/m * dmdt/3;
+}
+
+/**
  * @brief Derivative of radius in Chain Reaction model, in [m/s]
  * 
  * Source: Avramenko et al, 2014 [https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1002/2013JD021028]
@@ -587,14 +602,14 @@ constexpr auto drdt_debriscloud(double rp, double strength, double alpha, double
  */
 constexpr auto drdt_chainreaction(double rp, double strength, double r, double m, double dmdt,
                                   double C_fr, double rho_m) noexcept {
-    auto result = r/m * dmdt/3;
+    auto drdt = drdt_ablation(r, m, dmdt);
     if (rp > strength) {
-        result += C_fr * std::sqrt(rp - strength) * r /
+        drdt += C_fr * std::sqrt(rp - strength) * r /
                   (2. * std::cbrt(m) * std::cbrt(std::sqrt(rho_m)));
     }
-    return result;
+    return drdt;
 }
-
+  
 } // namespace fcm
 
 #endif // !ODE_HPP

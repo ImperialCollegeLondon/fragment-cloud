@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 
 from . import core
-from .models import *
+from .models import *  
 
 
 ###################################################
@@ -18,12 +18,15 @@ cloud_map = {CloudDispersionModel.PM: core.CloudDispersionModel.pancake,
              CloudDispersionModel.DCM: core.CloudDispersionModel.debris_cloud,
              CloudDispersionModel.CRM: core.CloudDispersionModel.chain_reaction}
 
+abl_map = {AblationModel.chain_reaction: core.AblationModel.meteoroid,
+           AblationModel.constant_r: core.AblationModel.meteoroid_const_r}
+
 
 ###################################################
 def _core_params(model, timeseries):
     
     if model.Rp == np.inf:
-        Rp = 1000e3
+        Rp = 1000.0
         use_flat_planet = True
     else:
         Rp = model.Rp * 1e3
@@ -43,8 +46,8 @@ def _core_params(model, timeseries):
     )
     
     core_settings = core.FcmSettings(cloud_map[model.cloud_disp_model], ts_map[model.timestepper],
-                                     use_flat_planet, not model.variable_timestep,
-                                     model.precision, model.dh, timeseries)
+                                     model.precision, model.dh, timeseries, use_flat_planet,
+                                     not model.variable_timestep, abl_map[model.ablation_model])
     
     return core_params, core_settings
 
