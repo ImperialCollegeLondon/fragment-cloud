@@ -11,8 +11,8 @@ from fcm._fcm_class import _check_number
 
 
 ###################################################
-def plot_craters(craters, crater_color="black", ellipse_color=None, figsize=None,
-                     px_lim=None, py_lim=None, fig=None, ax=None, flipxy=False):
+def plot_craters(craters, r_min=0., crater_color="black", ellipse_color=None, figsize=None,
+                     px_lim=None, py_lim=None, fig=None, ax=None, flipxy=False, centre_mean=False):
     """Make a matplotlib plot of a crater cluster.
     Optionally computes and plots best-fit ellipse around cluster
     
@@ -56,6 +56,10 @@ def plot_craters(craters, crater_color="black", ellipse_color=None, figsize=None
     if flipxy:
         print("Renaming columns")
         craters = craters.rename(columns={"x": "y", "y": "x"})
+
+    if centre_mean:
+        craters.x = craters.x - craters.x.mean()
+        craters.y = craters.y - craters.y.mean()
         
     x_min = (craters.x - craters.r).min()
     x_max = (craters.x + craters.r).max()
@@ -80,21 +84,23 @@ def plot_craters(craters, crater_color="black", ellipse_color=None, figsize=None
     
     for row in craters.itertuples():
         circle = Circle((row.x, row.y), row.r, color=crater_color, fill=False)
-        ax.add_artist(circle)
+        if (row.r > r_min): ax.add_artist(circle)
     
     ax.set_xlabel('x [m]')
     ax.set_ylabel('y [m]')
     ax.set_aspect('equal')
-    
+
+    bearing = 0.
     if ellipse_color is not None:
-        _, center, components = ellipse(craters)
+        _, center, components = ellipse(craters[craters.r > r_min])
+        bearing = 180/np.pi * np.arctan2(components[1, 0], components[0, 0])
         ell = Ellipse((center[0], center[1]),
                       np.linalg.norm(components[:, 0]), np.linalg.norm(components[:, 1]),
                       180/np.pi * np.arctan2(components[1, 0], components[0, 0]),
                       color=ellipse_color, fill=False)
         ax.add_artist(ell)
     
-    return fig
+    return fig, bearing
 
 
 ###################################################
