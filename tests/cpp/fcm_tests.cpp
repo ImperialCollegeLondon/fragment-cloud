@@ -325,7 +325,7 @@ BOOST_AUTO_TEST_CASE(it_works, * utf::tolerance(1e-8))
             BOOST_TEST(values2[i] > dEdz2);
         }
         if (i < max_index) {
-            BOOST_TEST(values2[i + z_index_0 - z_index_1] > values1[i + z_index_0 - z_index_1]);
+            BOOST_TEST(values2[i + z_index_0 - z_index_1] > values1[i]);
         }
     }
 }

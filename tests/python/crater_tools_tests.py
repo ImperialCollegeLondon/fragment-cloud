@@ -1,6 +1,8 @@
 import os, sys
 THIS_DIR = os.path.abspath(os.path.dirname(__file__))
-sys.path.insert(0, os.path.join(THIS_DIR, "..", ".."))
+top_dir = os.path.join(THIS_DIR, "..", "..")
+if sys.path[0] != top_dir:
+    sys.path.insert(0, top_dir)
 
 import numpy as np
 import pandas as pd
@@ -28,7 +30,7 @@ def test_dispersion():
     value_counts = pd.Series(disp).value_counts()
     
     expected = pd.Series({np.sqrt(2): 4, 2.0: 4, 2*np.sqrt(2): 2})
-    pd.testing.assert_series_equal(value_counts, expected)
+    pd.testing.assert_series_equal(value_counts.sort_index(), expected.sort_index())
     
     dummy_craters = pd.read_csv(os.path.join(THIS_DIR, "sample_cluster.csv"), index_col=0)
     disp = crater_tools.dispersion(dummy_craters.iloc[:3])
