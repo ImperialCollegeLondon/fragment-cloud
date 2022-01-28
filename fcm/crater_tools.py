@@ -3,12 +3,14 @@ import pandas as pd
 from scipy.spatial.distance import pdist
 from sklearn.decomposition import PCA
 from sklearn.utils import resample
+from sklearn.linear_model import LinearRegression
 
 from fcm._fcm_class import _check_number
 
 
 ###################################################
-def plot_craters(craters, crater_color="black", ellipse_color=None, figsize=None):
+def plot_craters(craters, r_min=0., crater_color="black", ellipse_color=None, figsize=None,
+                     px_lim=None, py_lim=None, fig=None, ax=None, flipxy=False, centre_mean=False):
     """Make a matplotlib plot of a crater cluster.
     Optionally computes and plots best-fit ellipse around cluster
     
@@ -32,6 +34,12 @@ def plot_craters(craters, crater_color="black", ellipse_color=None, figsize=None
     figsize : tuple[int], optional
         size of figure in inches
 
+    px_lim : tuple[float], optional
+        x-limits of plot axis
+
+    py_lim : tuple[float], optional
+        y-limits of plot axis
+
     Returns
     -------
     matplotlib.figure.Figure
@@ -44,6 +52,16 @@ def plot_craters(craters, crater_color="black", ellipse_color=None, figsize=None
         "craters must be a pandas.DataFrame instance"
     assert pd.Index(["x", "y", "r"]).isin(craters.columns).all(),\
         "craters must have columns 'x', 'y', and 'r'"
+
+
+    if flipxy:
+        print("Renaming columns")
+        craters = craters.rename(columns={"x": "y", "y": "x"})
+
+    if centre_mean:
+        craters.x = craters.x - craters.x.mean()
+        craters.y = craters.y - craters.y.mean()
+        
     x_min = (craters.x - craters.r).min()
     x_max = (craters.x + craters.r).max()
     y_min = (craters.y - craters.r).min()
@@ -52,28 +70,38 @@ def plot_craters(craters, crater_color="black", ellipse_color=None, figsize=None
     margin = 0.05
     x_min, x_max = x_min - margin * (x_max - x_min), x_max + margin * (x_max - x_min)
     y_min, y_max = y_min - margin * (y_max - y_min), y_max + margin * (y_max - y_min)
-    
-    fig, ax = plt.subplots(1, 1, figsize=figsize)
-    ax.set_xlim(x_min, x_max)
-    ax.set_ylim(y_min, y_max)
+
+    if fig is None:
+        fig, ax = plt.subplots(1, 1, figsize=figsize)
+
+    if px_lim is None:
+        ax.set_xlim(x_min, x_max)
+    else:
+        ax.set_xlim(px_lim)
+    if py_lim is None:
+        ax.set_ylim(y_min, y_max)
+    else:
+        ax.set_ylim(py_lim)
     
     for row in craters.itertuples():
         circle = Circle((row.x, row.y), row.r, color=crater_color, fill=False)
-        ax.add_artist(circle)
+        if (row.r > r_min): ax.add_artist(circle)
     
-    ax.set_xlabel('x')
-    ax.set_ylabel('y')
+    ax.set_xlabel('x [m]')
+    ax.set_ylabel('y [m]')
     ax.set_aspect('equal')
-    
+
+    bearing = 0.
     if ellipse_color is not None:
-        _, center, components = ellipse(craters)
+        _, center, components = ellipse(craters[craters.r > r_min])
+        bearing = 180/np.pi * np.arctan2(components[1, 0], components[0, 0])
         ell = Ellipse((center[0], center[1]),
                       np.linalg.norm(components[:, 0]), np.linalg.norm(components[:, 1]),
                       180/np.pi * np.arctan2(components[1, 0], components[0, 0]),
                       color=ellipse_color, fill=False)
         ax.add_artist(ell)
     
-    return fig
+    return fig, bearing
 
 
 ###################################################
@@ -193,6 +221,104 @@ def ellipse(craters, min_craters=5, bootstrap_samples=80, seed=74527):
     return aspect, center, components
 
 
+############################################################################
+def ellipse_coleman(craters):
+    '''calculates the best fit ellipse and aspect ratio
+    the crater tools ellipse function cannot calculate aspect for clusters <6 craters >40 observations are 2-5 craters
+    this function can calculate the ellipse for clusters of 2 craters or more'''
+    
+    x,y=craters['y'],craters['x']
+    xy=craters[['y', 'x']]
+
+    #take centre of ellipse as mean of coordinates of craters
+    centerx=np.mean(x)
+    centery=np.mean(y)
+
+    #calculate angle to rotate the ellipse by rotating towards the crater furthest from the centre
+    maxdist=0
+    xpoint=0
+    ypoint=0
+    for a,b in zip(x,y):
+        dist=np.sqrt((a-centerx)**2+(b-centery)**2)
+        if dist>maxdist:
+            maxdist=dist
+            xpoint=a
+            ypoint=b
+    if((xpoint-centerx))!=0:
+        rot=np.rad2deg(np.arctan((ypoint-centery)/(xpoint-centerx)))
+    else:
+        rot=0
+    #retrieves the coordinates that make up the craters made using matplotlib.patches.Circle
+    craterpointsx,craterpointsy=[],[]
+    for row in craters.itertuples():
+            circle = Circle((row.y, row.x), row.r, color="black", fill=False)
+            path = circle.get_path()
+            transform = circle.get_transform()
+            newpath = transform.transform_path(path)
+            circums=newpath.cleaned().iter_segments()
+            for i in circums:
+                craterpointsx.append(i[0][0])
+                craterpointsy.append(i[0][1])
+    craterpoints=list(zip(craterpointsx,craterpointsy))
+
+    done=False
+    donew=False
+    doneh=False
+    f=1 
+    #choose starting width and height as the maximum and minimum of largest distance between the most distant x and y values 
+    w=max(max(craterpointsx)-min(craterpointsx),max(craterpointsy)-min(craterpointsy))
+    h=min(max(craterpointsx)-min(craterpointsx),max(craterpointsy)-min(craterpointsy))
+    
+    #begin fitting the ellipse
+    while done==False:
+        e=Ellipse(xy=(centerx,centery),width=w,height=h,angle=rot,fill=False,edgecolor='navajowhite',alpha=.4)
+        #expand the ellipse width and height by 1% until it contains all the craters completely within it
+        if e.contains_points(craterpoints,radius=0).all()==True:
+
+            wsf=1
+            while donew==False:
+                e=Ellipse(xy=(centerx,centery),width=w,height=h,angle=rot,fill=False,edgecolor='plum',alpha=.4)
+                #attempt to shrink the ellipse in the width direction until the craters are no longer contained
+                #then revert back one shrinking step so the craters leave the loop contained
+                if e.contains_points(craterpoints,radius=0).all()==False:
+                    w=w/wsf
+                    donew=True
+                else:
+                    wsf=0.99#wsf-fi
+                    w=w*wsf
+
+            hsf=1        
+            while doneh==False:
+                e=Ellipse(xy=(centerx,centery),width=w,height=h,angle=rot,fill=False,edgecolor='aqua',alpha=.4)
+                #attempt to shrink the ellipse in the width direction until the craters are no longer contained
+                #then revert back one shrinking step so the craters leave the loop contained
+                if e.contains_points(craterpoints,radius=0).all()==False:
+                    h=h/hsf
+                    doneh=True
+                else:
+                    hsf=0.99#hsf-fi
+                    h=h*hsf
+            
+            #plot the final best fit ellipse and calculate aspect,eccentricity(unused),area of the ellipse(unused)
+            e=Ellipse(xy=(centerx,centery),width=w,height=h,angle=rot,fill=False,edgecolor='springgreen')
+            aspect=abs(min(w,h)/max(w,h))
+            ecc=np.sqrt(np.square(max(w,h)/2)-np.square(min(w,h)/2))/max(w,h)
+            area=np.pi*w*h
+            done=True
+
+        else:
+            f=1.01#f+fi
+            w=w*f
+            h=h*f
+
+    #fig,ax=plt.subplots()     ### comment out this line and below if plotting not wanted
+    #showellipse(craters,ax)	###plots the ellipse around the craters
+
+    #return aspect, eccentricity, centre coordinates,major axis length, minor axis length, rotation of ellipse, area of ellispe
+    return (aspect,ecc,e.get_center(),max(w,h),min(w,h),rot,area)
+
+
+
 ###################################################
 def dispersion(craters):
     """Calculate pairwise distane of crater centers
@@ -274,6 +400,39 @@ def f_larger_D_max_frac(radii, frac=0.25):
     return (radii > comp*frac).mean(axis=-1)
 
 
+
+###################################################
+def csfd_fit(craters, min_craters = 5):
+    """Fit a power law through the cumulative size-frequency distribution of craters
+       in the cluster and return the exponent and max diameter.
+
+    Parameters
+    ----------
+    craters :  pandas.DataFrame
+
+    min_craters : int
+         minimum number of craters in cluster to fit CSFD
+
+    """
+
+    d = 2*craters['r'].to_numpy()
+    d_max = d.max()
+    d_min = d.min()
+    d_med = np.median(d)
+    
+    if len(craters) < min_craters:
+        d_exp = 0.
+    else:
+        cfd = craters['r'].value_counts().sort_index()[::-1].cumsum()
+        X = np.log10(cfd.index.values.reshape(-1,1))
+        Y = np.log10(cfd.values.reshape(-1,1))
+        linear_regressor = LinearRegression()  # create object for the class
+        sol = linear_regressor.fit(X, Y)  # perform linear regression
+        d_exp = sol.coef_[0][0]
+
+    return d_exp, d_max, d_med, d_min
+
+    
 ###################################################
 def lon_lat_to_meters(craters, Rp):
     """Convert crater cluster with crater coordinates in (latitude, longitude), in degrees,
@@ -298,4 +457,190 @@ def lon_lat_to_meters(craters, Rp):
     lon_center, lat_center = craters.lon.mean(), craters.lat.mean()
     craters['x'] = Rp * (craters.lat - lat_center) * np.pi / 180
     craters['y'] = Rp * np.cos(lat_center * np.pi / 180) * (craters.lon - lon_center) * np.pi / 180
+
+##############################################################
+def cluster_characteristics(craters, r_min=0.):
+    """Calculate a suite of characteristics for a given cluster.
     
+    Parameters
+    ----------
+    craters : pandas.DataFrame
+        list of craters in cluster
+        columns = ['x', 'y', 'r']
+        units must be the same for all columns, typically meters
+
+    Returns
+    -------
+    cdict : Dictionary
+        a dictionary of cluster characteristics with the following entries:
+        * Effective diameter [m] -- (Sum D_i**3)**0.333
+        * No. of craters -- total number of craters in the cluster (larger than minimum size)
+        * Dispersion [m] -- median distance between crater pairs
+        * Aspect ratio -- width/length of best-fitting ellipse around cluster
+        * No. of large craters -- No. of craters with D > f*Dmax
+        * Large crater fraction -- Proportion of craters with D > f*Dmax
+    """
+
+    # Populate the dictionary with default values for no craters
+    cdict = {'Effective Diameter [m]': 0., 
+             'No. of Craters': 0,
+             'Dispersion [m]': 0.,
+             'Aspect Ratio': 0.,
+             'Aspect Ratio (alt)': 1.,
+             'Large Crater Fraction': 0.,
+             'CSFD exponent': 0.,
+             'Maximum Diameter [m]': 0.,
+             'Median Diameter [m]': 0.,
+             'Minimum Diameter [m]': 0.,
+             'No. of Large Craters': 0}
+
+    if craters is None:
+        return cdict
+
+    # Filter out small craters if necessary
+    craters = craters[craters['r'] > r_min]
+    radii = craters['r'].to_numpy()
+    
+    # If no craters left, treat as airburst
+    if len(radii) == 0:
+        return cdict
+    
+    # Compute cluster characteristics if more than one crater
+    if len(radii) > 1:
+        cdict['Effective Diameter [m]'] = effective_diameter(radii)
+        cdict['No. of Craters'] = len(craters)
+        cdict['Dispersion [m]'] = np.median(dispersion(craters))
+        ellipse_params = ellipse_coleman(craters)
+        cdict['Aspect Ratio'] = ellipse_params[0]
+        ellipse_params = ellipse(craters)
+        cdict['Aspect Ratio (alt)'] = ellipse_params[0]
+        csfd_exp, d_max, d_med, d_min = csfd_fit(craters) 
+        cdict['CSFD exponent'] = csfd_exp
+        cdict['Maximum Diameter [m]'] = d_max
+        cdict['Median Diameter [m]'] = d_med
+        cdict['Minimum Diameter [m]'] = d_min
+        cdict['No. of Large Craters'] = n_larger_D_max_frac(radii, frac=0.5)
+        cdict['Large Crater Fraction'] = f_larger_D_max_frac(radii, frac=0.5)
+
+    # Otherwise define values for single crater
+    else:
+        cdict = {'Effective Diameter [m]': 2*radii[0], 
+                 'No. of Craters': 1,
+                 'Dispersion [m]': 0.,
+                 'Aspect Ratio': 1.,
+                 'Aspect Ratio (alt)': 1.,
+                 'Large Crater Fraction': 1.,
+                 'CSFD exponent': 0.,
+                 'Maximum Diameter [m]': 2*radii[0],
+                 'Median Diameter [m]': 2*radii[0],
+                 'Minimum Diameter [m]': 2*radii[0],
+                 'No. of Large Craters': 1}
+            
+    return cdict
+
+
+##############################################################
+def fragments_characteristics(fragments):
+    """Calculate a suite of characteristics for the population of
+       fragments at the end of a run.
+    
+    Parameters
+    ----------
+    fragments : pandas.DataFrame
+        list of fragments in population
+
+    Returns
+    -------
+    fdict : Dictionary
+        a dictionary of fragment populations characteristics
+    """
+
+    # Populate the dictionary with default values for no craters
+    fdict = {'No. of fragments': 0,
+             'Total mass [kg]': 0.,
+             'Total momentum [Ns]': 0.,
+             'Total vert. momentum [Ns]': 0.,
+             'Maximum mass [kg]': 0.,
+             'Median mass [kg]': 0.,
+             'Minimum mass [kg]': 0.,
+             'Mean mass [kg]': 0.,
+             'Std. dev. mass [kg]': 0.,
+             'Maximum velocity [km/s]': 0.,
+             'Median velocity [km/s]': 0.,
+             'Minimum velocity [km/s]': 0.,
+             'Mean velocity [km/s]': 0.,
+             'Std. dev. velocity [km/s]': 0.,
+             'Maximum angle': 0.,
+             'Median angle': 0.,
+             'Minimum angle': 0.,
+             'Mean angle': 0.,
+             'Std. dev. angle': 0.,
+             'Maximum time [s]': 0.,
+             'Median time [s]': 0.,
+             'Mean time [s]': 0.,
+             'Std. dev. time [s]': 0.,
+             'Maximum momentum [Ns]': 0.,
+             'Median momentum [Ns]': 0.,
+             'Minimum momentum [Ns]': 0.,
+             'Mean momentum [Ns]': 0.,
+             'Std. dev. momentum [Ns]': 0.,
+             'Maximum vert. momentum [Ns]': 0.,
+             'Median vert. momentum [Ns]': 0.,
+             'Minimum vert. momentum [Ns]': 0.,
+             'Mean vert. momentum [Ns]': 0.,
+             'Std. dev. vert. momentum [Ns]': 0.}
+
+    if fragments is None:
+        return fdict
+
+    # Fragments of interest are those hitting the ground
+    f = fragments[fragments.h < 1.E-6]
+
+    # Return blank dictionary if nothing hits the ground
+    if len(f) == 0:
+        return fdict
+    
+    # Determine separation time of impact
+    f['dt'] = f.t - f.t.min()
+    f['mv'] = f.m * f.v * 1000.
+    f['mvv'] = f.mv * np.sin(np.radians(f.angle))
+    fstats = f.describe()
+
+    # Populate the dictionary with default values for no craters
+    fdict['No. of fragments']             = len(f)
+    fdict['Total mass [kg]']              = f.m.sum()
+    fdict['Total momentum [Ns]']          = f.mv.sum()
+    fdict['Total vert. momentum [Ns]']    = f.mvv.sum()
+    fdict['Maximum mass [kg]']            = fstats.m.loc['max']
+    fdict['Median mass [kg]']             = fstats.m.loc['50%']
+    fdict['Minimum mass [kg]']            = fstats.m.loc['min']
+    fdict['Mean mass [kg]']               = fstats.m.loc['mean']
+    fdict['Maximum velocity [km/s]']      = fstats.v.loc['max']
+    fdict['Median velocity [km/s]']       = fstats.v.loc['50%']
+    fdict['Minimum velocity [km/s]']      = fstats.v.loc['min']
+    fdict['Mean velocity [km/s]']         = fstats.v.loc['mean']
+    fdict['Maximum angle']                = fstats.angle.loc['max']
+    fdict['Median angle']                 = fstats.angle.loc['50%']
+    fdict['Minimum angle']                = fstats.angle.loc['min']
+    fdict['Mean angle']                   = fstats.angle.loc['mean']
+    fdict['Maximum time [s]']             = fstats.dt.loc['max']
+    fdict['Median time [s]']              = fstats.dt.loc['50%']
+    fdict['Mean time [s]']                = fstats.dt.loc['mean']
+    fdict['Maximum momentum [Ns]']        = fstats.mv.loc['max']
+    fdict['Median momentum [Ns]']         = fstats.mv.loc['50%']
+    fdict['Minimum momentum [Ns]']        = fstats.mv.loc['min']
+    fdict['Mean momentum [Ns]']           = fstats.mv.loc['mean']
+    fdict['Maximum vert. momentum [Ns]']  = fstats.mvv.loc['max']
+    fdict['Median vert. momentum [Ns]']   = fstats.mvv.loc['50%']
+    fdict['Minimum vert. momentum [Ns]']  = fstats.mvv.loc['min']
+    fdict['Mean vert. momentum [Ns]']     = fstats.mvv.loc['mean']
+
+    if len(f) > 1:
+        fdict['Std. dev. mass [kg]']           = fstats.m.loc['std']
+        fdict['Std. dev. velocity [km/s]']     = fstats.v.loc['std']
+        fdict['Std. dev. angle']               = fstats.angle.loc['std']
+        fdict['Std. dev. time [s]']            = fstats.dt.loc['std']
+        fdict['Std. dev. momentum [Ns]']       = fstats.mv.loc['std']
+        fdict['Std. dev. vert. momentum [Ns]'] = fstats.mvv.loc['std']
+        
+    return fdict

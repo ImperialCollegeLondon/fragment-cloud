@@ -305,6 +305,10 @@ def default_cratering_params(ground_type):
         return CrateringParams(ground_density=1.5e3, ground_strength=50, rim_factor=1.3, K1=0.133,
                                K2=1, mu=0.41, nu=0.4, Kr=1.25)
     
+    if gt is GroundType.dry_soil:
+        return CrateringParams(ground_density=1.5e3, ground_strength=200, rim_factor=1.3, K1=0.133,
+                               K2=1, mu=0.41, nu=0.4, Kr=1.25)
+
     raise NotImplementedError(
         "Default parameters for ground type '{}' not specified".format(gt.value)
     )

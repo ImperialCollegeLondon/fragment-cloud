@@ -56,7 +56,6 @@ def martian_atmosphere_api(latitude, longitude, timestamp, zkey=2):
                      4: "pressure level (kPa)",
                      5: "altitude above reference radius (km)"}
 
-
     # Check for valid inputs
     zkey = _check_number(zkey, "zkey", False, 1, True, 5, True)
     latitude = _check_number(latitude, "latitude", True, -90, True, 90, True)
