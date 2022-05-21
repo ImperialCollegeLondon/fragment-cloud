@@ -12,17 +12,15 @@ namespace fcm {
  * @brief (first order, explicit) forward Euler step for time-independent ODE function
  * 
  * @tparam StateT
- * @tparam DeltaT 
  * @tparam TimeT 
- * @tparam NoRefStateT=std::remove_reference_t<StateT> 
+ * @tparam FuncT
  * @param current_state 
  * @param df: ODE function
  * @param dt: time step
  * @return NoRefStateT: next state
  */
-template<class StateT, class DeltaT, class TimeT, class NoRefStateT=std::remove_reference_t<StateT>>
-NoRefStateT forward_euler(StateT&& current_state,
-                          const std::function<DeltaT(const NoRefStateT&)>& df, const TimeT dt) {
+template<class StateT, class TimeT, class FuncT>
+auto forward_euler(StateT&& current_state, FuncT&& df, const TimeT dt) {
     auto next_state = std::forward<StateT>(current_state);
     next_state += df(next_state) * dt;
     
@@ -33,19 +31,16 @@ NoRefStateT forward_euler(StateT&& current_state,
  * @brief (first order, explicit) forward Euler step for time-dependent ODE function
  * 
  * @tparam StateT
- * @tparam DeltaT 
  * @tparam TimeT 
- * @tparam NoRefStateT=std::remove_reference_t<StateT> 
+ * @tparam FuncT
  * @param current_state 
  * @param df: ODE function
  * @param t: current time
  * @param dt: time step
  * @return NoRefStateT: next state
  */
-template<class StateT, class DeltaT, class TimeT, class NoRefStateT=std::remove_reference_t<StateT>>
-NoRefStateT forward_euler(StateT&& current_state,
-                          const std::function<DeltaT(const TimeT, const NoRefStateT&)>& df,
-                          const TimeT t, const TimeT dt) {
+template<class StateT, class TimeT, class FuncT>
+auto forward_euler(StateT&& current_state, FuncT&& df, const TimeT t, const TimeT dt) {
     auto next_state = std::forward<StateT>(current_state);
     next_state += df(t, next_state) * dt;
     
@@ -56,17 +51,15 @@ NoRefStateT forward_euler(StateT&& current_state,
  * @brief (second order, explicit) improved Euler step for time-independent ODE function
  * 
  * @tparam StateT
- * @tparam DeltaT 
  * @tparam TimeT 
- * @tparam NoRefStateT=std::remove_reference_t<StateT> 
+ * @tparam FuncT
  * @param current_state 
  * @param df: ODE function
  * @param dt: time step
  * @return NoRefStateT: next state
  */
-template<class StateT, class DeltaT, class TimeT, class NoRefStateT=std::remove_reference_t<StateT>>
-NoRefStateT improved_euler(StateT&& current_state,
-                           const std::function<DeltaT(const NoRefStateT&)>& df, const TimeT dt) {
+template<class StateT, class TimeT, class FuncT>
+auto improved_euler(StateT&& current_state, FuncT&& df, const TimeT dt) {
     auto next_state = std::forward<StateT>(current_state);
     const auto k = df(next_state) * dt;
 
@@ -79,19 +72,16 @@ NoRefStateT improved_euler(StateT&& current_state,
  * @brief (second order, explicit) improved Euler step for time-dependent ODE function
  * 
  * @tparam StateT
- * @tparam DeltaT 
  * @tparam TimeT 
- * @tparam NoRefStateT=std::remove_reference_t<StateT> 
+ * @tparam FuncT
  * @param current_state 
  * @param df: ODE function
  * @param t: current time
  * @param dt: time step
  * @return NoRefStateT: next state
  */
-template<class StateT, class DeltaT, class TimeT, class NoRefStateT=std::remove_reference_t<StateT>>
-NoRefStateT improved_euler(StateT&& current_state,
-                           const std::function<DeltaT(const TimeT, const NoRefStateT&)>& df,
-                           const TimeT t, const TimeT dt) {
+template<class StateT, class TimeT, class FuncT>
+auto improved_euler(StateT&& current_state, FuncT&& df, const TimeT t, const TimeT dt) {
     auto next_state = std::forward<StateT>(current_state);
     const auto k = df(t, next_state) * dt;
 
@@ -104,18 +94,15 @@ NoRefStateT improved_euler(StateT&& current_state,
  * @brief (forth order, explicit) Runge-Kutta 4 step for time-independent ODE function
  * 
  * @tparam StateT
- * @tparam DeltaT 
  * @tparam TimeT 
- * @tparam NoRefStateT=std::remove_reference_t<StateT> 
+ * @tparam FuncT
  * @param current_state 
  * @param df: ODE function
  * @param dt: time step
  * @return NoRefStateT: next state
  */
-template<class StateT, class DeltaT, class TimeT, class NoRefStateT=std::remove_reference_t<StateT>>
-NoRefStateT RK4(StateT&& current_state,
-                const std::function<DeltaT(const TimeT, const NoRefStateT&)>& df,
-                const TimeT t, const TimeT dt) {
+template<class StateT, class TimeT, class FuncT>
+auto RK4(StateT&& current_state, FuncT&& df, const TimeT t, const TimeT dt) {
     auto next_state = std::forward<StateT>(current_state);
 
     const auto k1 = df(t, next_state) * dt;
@@ -132,18 +119,16 @@ NoRefStateT RK4(StateT&& current_state,
  * @brief (forth order, explicit) Runge-Kutta 4 step for time-dependent ODE function
  * 
  * @tparam StateT
- * @tparam DeltaT 
  * @tparam TimeT 
- * @tparam NoRefStateT=std::remove_reference_t<StateT> 
+ * @tparam FuncT
  * @param current_state 
  * @param df: ODE function
  * @param t: current time
  * @param dt: time step
- * @return NoRefStateT: next state
+ * @return StateT: next state
  */
-template<class StateT, class DeltaT, class TimeT, class NoRefStateT=std::remove_reference_t<StateT>>
-NoRefStateT RK4(StateT&& current_state, const std::function<DeltaT(const NoRefStateT&)>& df,
-                const TimeT dt)  {
+template<class StateT, class TimeT, class FuncT>
+auto RK4(StateT&& current_state, FuncT&& df, const TimeT dt) {
     auto next_state = std::forward<StateT>(current_state);
 
     const auto k1 = df(next_state) * dt;
@@ -163,18 +148,17 @@ NoRefStateT RK4(StateT&& current_state, const std::function<DeltaT(const NoRefSt
  * @tparam StateT 
  * @tparam DeltaT 
  * @tparam TimeT 
- * @tparam NoRefStateT=std::remove_reference_t<StateT> 
+ * @tparam FuncT
  * @param current_state 
  * @param df_prev: df(previous_state) 
  * @param df: ODE function
  * @param dt: time step
  * @param dt_prev: previous time step
- * @return std::tuple<NoRefStateT, DeltaT> [next state, df(t, current_state)]
+ * @return std::tuple<StateT, DeltaT> [next state, df(t, current_state)]
  */
-template<class StateT, class DeltaT, class TimeT, class NoRefStateT=std::remove_reference_t<StateT>>
-std::tuple<NoRefStateT, DeltaT> AB2(StateT&& current_state, const DeltaT& df_prev,
-                                    const std::function<DeltaT(const NoRefStateT&)>& df, 
-                                    const TimeT dt, const TimeT dt_prev) {
+template<class StateT, class DeltaT, class TimeT, class FuncT>
+auto AB2(StateT&& current_state, const DeltaT& df_prev,
+         FuncT&& df, const TimeT dt, const TimeT dt_prev) {
 
     auto next_state = std::forward<StateT>(current_state);
     const auto omega = dt / (2*dt_prev);
@@ -182,7 +166,7 @@ std::tuple<NoRefStateT, DeltaT> AB2(StateT&& current_state, const DeltaT& df_pre
 
     next_state += (df_current * (1+omega) + df_prev * (-omega)) * dt;
 
-    return std::make_tuple(next_state, df_current);
+    return std::tuple(next_state, df_current);
 }
 
 /**
@@ -192,7 +176,7 @@ std::tuple<NoRefStateT, DeltaT> AB2(StateT&& current_state, const DeltaT& df_pre
  * @tparam StateT 
  * @tparam DeltaT 
  * @tparam TimeT 
- * @tparam NoRefStateT=std::remove_reference_t<StateT> 
+ * @tparam FuncT
  * @param current_state 
  * @param df_prev: df(t - dt_prev, previous_state) 
  * @param df: ODE function
@@ -201,17 +185,16 @@ std::tuple<NoRefStateT, DeltaT> AB2(StateT&& current_state, const DeltaT& df_pre
  * @param dt_prev: previous time step
  * @return std::tuple<NoRefStateT, DeltaT> [next state, df(t, current_state)]
  */
-template<class StateT, class DeltaT, class TimeT, class NoRefStateT=std::remove_reference_t<StateT>>
-std::tuple<NoRefStateT, DeltaT> AB2(StateT&& current_state, const DeltaT& df_prev,
-                                    const std::function<DeltaT(const TimeT, const NoRefStateT&)>& df,
-                                    const TimeT t, const TimeT dt, const TimeT dt_prev) {
+template<class StateT, class DeltaT, class TimeT, class FuncT>
+auto AB2(StateT&& current_state, const DeltaT& df_prev, FuncT&& df,
+         const TimeT t, const TimeT dt, const TimeT dt_prev) {
     auto next_state = std::forward<StateT>(current_state);
     const auto omega = dt / (2*dt_prev);
     const auto df_current = df(t, next_state);
 
     next_state += (df_current * (1+omega) + df_prev * (-omega)) * dt;
 
-    return std::make_tuple(next_state, df_current);
+    return std::tuple(next_state, df_current);
 }
 
 } // namespace fcm
