@@ -1,9 +1,7 @@
 #ifndef SOLVERS_HPP
 #define SOLVERS_HPP
 
-#include <functional>
 #include <tuple>
-#include <type_traits>
 #include <utility>
 
 namespace fcm {

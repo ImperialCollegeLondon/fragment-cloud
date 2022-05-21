@@ -173,7 +173,7 @@ auto test_values() {
     const auto ode_sol = sol_function();
     const auto y_solution = ode_sol(t_max);
 
-    return make_tuple(t0, t_max, y0, y_solution);
+    return tuple(t0, t_max, y0, y_solution);
 }
 
 BOOST_AUTO_TEST_SUITE(time_dependent_1D_ode)
@@ -371,7 +371,7 @@ auto test_values_2D() {
     const double t_max = 3;
     const auto y_solution = ode_sol(t_max);
 
-    return make_tuple(t0, t_max, y0, y_solution);
+    return tuple(t0, t_max, y0, y_solution);
 }
 
 BOOST_AUTO_TEST_SUITE(time_independent_2D_ode)

@@ -17,7 +17,7 @@ std::tuple<std::vector<double>, std::vector<double>> test_data(const double rho_
     std::transform(h.cbegin(), h.cend(), rho_a.begin(),                               // <algorithm>
                    [=](const double z){ return rho_0 * std::exp(-z/scale_height); }); // <cmath>
 
-    return std::make_tuple(h, rho_a);
+    return std::tuple(h, rho_a);
 }
 
 BOOST_AUTO_TEST_CASE(move_constructor, * utf::tolerance(1e-8))

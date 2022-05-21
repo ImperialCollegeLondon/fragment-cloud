@@ -21,7 +21,7 @@ namespace fcm {
  * @brief Info about a structural group within a meteoroid in the Wheeler et al. (2018) FCM model.
  * On first break up, the meteoroid splits up into a debris cloud and these structural pieces.
  */
-struct StructuralGroup : public SubFragment {
+struct StructuralGroup : SubFragment {
     using pieces_t = unsigned short int;
     /**
      * @brief number of identical pieces in the group

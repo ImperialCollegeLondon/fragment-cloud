@@ -86,7 +86,7 @@ std::tuple<double*, std::vector<Py_intptr_t>> _concat_timeseries_arr(
     assert(iterator == timeseries + length); // <cassert>
     const std::vector<Py_intptr_t> shape {Py_intptr_t(data.size()), data_size};
 
-    return std::make_tuple(timeseries, shape);
+    return std::tuple(timeseries, shape);
 }
 
 std::tuple<std::vector<double>, std::vector<Py_intptr_t>> _concat_timeseries_vec(
@@ -101,7 +101,7 @@ std::tuple<std::vector<double>, std::vector<Py_intptr_t>> _concat_timeseries_vec
     assert(timeseries.size() == timeseries.capacity());
     const std::vector<Py_intptr_t> shape {Py_intptr_t(data.size()), data_size};
 
-    return std::make_tuple(timeseries, shape);
+    return std::tuple(timeseries, shape);
 }
 
 AtmosphericDensity _rho_a_from_np(const np::ndarray& height, const np::ndarray& density) {

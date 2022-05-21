@@ -182,7 +182,7 @@ BOOST_AUTO_TEST_CASE(holsapple_regolith, * utf::tolerance(1e-8))
     const auto r_regolith = fcm::radius_in_regolith(r, p.g, vz_squared, p.rho_m, ground_density, p.rf);
     const auto r_granular = fcm::radius_in_granular_soil(r, ground_strength, vz_squared, p.rho_m,
                                                          ground_density, p.rf);
-    const auto [K1, K2, Kr, mu, nu] = std::make_tuple(0.15, 1.0, 1.1, 0.4, 0.4);
+    const auto [K1, K2, Kr, mu, nu] = std::tuple(0.15, 1.0, 1.1, 0.4, 0.4);
     const auto r_holsapple = fcm::Holsapple_crater_radius(
         ground_strength, ground_density, std::sqrt(vz_squared), p.g, r, p.rho_m, K1, nu, mu, K2,
         Kr, p.m/1e3, p.rf
@@ -206,7 +206,7 @@ BOOST_AUTO_TEST_CASE(holsapple_granular_soil, * utf::tolerance(1e-8))
     const auto r_regolith = fcm::radius_in_regolith(r, p.g, vz_squared, p.rho_m, ground_density, p.rf);
     const auto r_granular = fcm::radius_in_granular_soil(r, ground_strength, vz_squared, p.rho_m,
                                                          ground_density, p.rf);
-    const auto [K1, K2, Kr, mu, nu] = std::make_tuple(0.04, 1.0, 1.1, 0.55, 0.4);
+    const auto [K1, K2, Kr, mu, nu] = std::tuple(0.04, 1.0, 1.1, 0.55, 0.4);
     const auto r_holsapple = fcm::Holsapple_crater_radius(
         ground_strength, ground_density, std::sqrt(vz_squared), p.g, r, p.rho_m, K1, nu, mu, K2,
         Kr, p.m/1e3, p.rf

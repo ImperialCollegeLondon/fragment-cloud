@@ -64,7 +64,7 @@ auto test_params(const std::shared_ptr<const fcm::FCM_settings>& settings, const
         f = tmp.front();
     }
 
-    return std::make_tuple(p, m, f, rho_a);
+    return std::tuple(p, m, f, rho_a);
 }
 
 template<class T>
@@ -484,10 +484,10 @@ BOOST_AUTO_TEST_CASE(it_runs)
     const std::array<double, data_size> final_state3 {15, 4e3, 200, 1.55, 0, 21e3, 0, 1.72, 185, 1, 12e3};
 
     const std::list<std::pair<fcm::FragmentInfo, std::list<std::array<double, data_size>>>> fragment_data {
-        std::make_pair(info0, std::list<std::array<double, data_size>> {final_state0}),
-        std::make_pair(info1, std::list<std::array<double, data_size>> {final_state1}),
-        std::make_pair(info2, std::list<std::array<double, data_size>> {final_state2}),
-        std::make_pair(info3, std::list<std::array<double, data_size>> {final_state3}),
+        std::pair(info0, std::list<std::array<double, data_size>> {final_state0}),
+        std::pair(info1, std::list<std::array<double, data_size>> {final_state1}),
+        std::pair(info2, std::list<std::array<double, data_size>> {final_state2}),
+        std::pair(info3, std::list<std::array<double, data_size>> {final_state3}),
     };
 
     const auto settings = make_settings(fcm::CloudDispersionModel::pancake);

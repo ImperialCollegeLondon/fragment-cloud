@@ -24,7 +24,7 @@ inline tuple<vector<Py_intptr_t>, Py_intptr_t> array_shape_size(const np::ndarra
     const vector<Py_intptr_t> shape(shape_ptr, shape_ptr + array.get_nd());
     const auto size = accumulate(shape.cbegin(), shape.cend(), 1, multiplies<Py_intptr_t>()); // <numeric>, <functional>
     
-    return make_tuple(shape, size);
+    return tuple(shape, size);
 }
 
 template<class T>
@@ -36,7 +36,7 @@ tuple<vector<T>, vector<Py_intptr_t>> np_to_vector(const np::ndarray& array) {
     const auto [shape, size] = array_shape_size(array_type_T);
     const vector<T> vec(array_ptr, array_ptr + size);
 
-    return make_tuple(vec, shape);
+    return tuple(vec, shape);
 }
 
 template<class T>
