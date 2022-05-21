@@ -144,6 +144,8 @@ void dEdzInterpolator::add_dedz(const Fragment& fragment) {
  * (i) impact, (ii) escape from atmosphere, (iii) too small to produce detectable crater,
  * (iv) debris cloud deposited 99.99% of original kinetic energy, (v) break up
  * 
+ * @tparam DerivFunc
+ * @tparam StepFunc
  * @param fragment: Fragment in initial state
  * @param z_start: simulation start elevation above MOLA_0 in [m]
  * @param z_ground: ground elevation above MOLA_0 in [m]
@@ -158,10 +160,10 @@ void dEdzInterpolator::add_dedz(const Fragment& fragment) {
  *      [2] list of std::arrays with time series data
  *      [3] list of new fragments (non-empty if break up occured
  */
+template<typename DerivFunc, typename StepFunc>
 auto _solve_fragment(Fragment&& fragment, const double z_start, const double z_ground,
-                     const bool calculate_dEdz, const FCM_params& params, const FCM_settings& settings,
-                     const std::function<offset(const Fragment&)>& df,
-                     const std::function<Fragment(Fragment&&)>& step) {
+                     const bool calculate_dEdz, const FCM_params params, const FCM_settings settings,
+                     DerivFunc&& df, StepFunc&& step) {
 
     std::list<std::array<double, data_size>> timeseries;
     if (settings.record_data) {
@@ -240,8 +242,8 @@ auto _solve_fragment(Fragment&& fragment, const double z_start, const double z_g
     }
     const auto info = fragment.info(z_start, z_ground);
 
-    return std::make_tuple(info, std::make_pair(dEdz_vector.z_index_0(), dEdz_vector.values()),
-                           timeseries, daughter_fragments);
+    return std::tuple(info, std::pair(dEdz_vector.z_index_0(), dEdz_vector.values()),
+                      timeseries, daughter_fragments);
 }
 
 auto _adaptive_timestep(const double tolerance, const offset& delta_scale, const offset& delta,
@@ -261,39 +263,33 @@ auto _adaptive_timestep(const double tolerance, const offset& delta_scale, const
 
     const auto dt_next = dt * (1 + 0.1 * (std::log2(1 + tolerance / relative_error) - 1));
 
-    return std::make_pair(dt_next, relative_error / tolerance);
+    return std::pair(dt_next, relative_error / tolerance);
 }
 
-std::pair<
-    std::vector<double>,
-    std::list<std::pair<
-        FragmentInfo,
-        std::list<std::array<double, data_size>>
-    >>
-> fcm::solve_entry(const Meteoroid& impactor, const double z_start, const double z_ground,
-                   const AtmosphericDensity& rho_a, const FCM_params& params, 
-                   const FCM_settings& settings, const bool calculate_dEdz, const id_type seed) {
+enum class StepSizeBehaviour {
+    Constant,
+    Adaptive
+};
 
-    if (z_start <= 0) throw std::invalid_argument("z_start must be > 0");
-    if (z_start <= z_ground) throw std::invalid_argument("z_start must be > z_ground");
-    if (z_ground <= -params.Rp) throw std::invalid_argument("z_ground must be > -Rp");
-
-    const std::function<offset(const Fragment&)> df = [&](const Fragment& fragment){
+template<ODEsolver Solver, StepSizeBehaviour StepSize>
+auto _define_solver_and_solve_fragment(Fragment&& fragment, const double z_start, const double z_ground,
+                                       const bool calculate_dEdz, const FCM_params params,
+                                       const FCM_settings settings) {
+    const auto df = [params, settings, z_ground](const Fragment& fragment){
         return fcm::dfdt(fragment, params, settings, z_ground);
     };
 
-    std::function<Fragment(Fragment&&)> step;
-    switch (settings.ode_solver) {
-        case ODEsolver::forwardEuler: {
-            if (settings.fixed_timestep) {
-                step = [&](Fragment&& frag){
+    const auto step = [&df, params, settings, z_ground] () {
+        if constexpr (Solver == ODEsolver::forwardEuler) {
+            if constexpr (StepSize == StepSizeBehaviour::Constant) {
+                return [df](Fragment&& frag) {
                     const auto dt = frag.dt_prev();
                     auto result = fcm::forward_euler(std::move(frag), df, dt);
                     result.advance_time(dt);
                     return result;
                 };
             } else {
-                step = [&](Fragment&& frag){
+                return [df, params, settings](Fragment&& frag) {
                     auto dt = frag.dt_next();
                     while (true) {
                         auto result = fcm::forward_euler(frag, df, dt);
@@ -309,18 +305,17 @@ std::pair<
                     }
                 };
             }
-            break;
         }
-        case ODEsolver::improvedEuler: {
-            if (settings.fixed_timestep) {
-                step = [&](Fragment&& frag) {
+        else if constexpr (Solver == ODEsolver::improvedEuler) {
+            if constexpr (StepSize == StepSizeBehaviour::Constant) {
+                return [df](Fragment&& frag) {
                     const auto dt = frag.dt_prev();
                     auto result = fcm::improved_euler(std::move(frag), df, dt);
                     result.advance_time(dt);
                     return result;
                 };
             } else {
-                step = [&](Fragment&& frag){
+                return [df, params, settings](Fragment&& frag) {
                     auto dt = frag.dt_next();
                     while (true) {
                         auto result = fcm::improved_euler(frag, df, dt);
@@ -336,18 +331,17 @@ std::pair<
                     }
                 };
             }
-            break;
         }
-        case ODEsolver::RK4: {
-            if (settings.fixed_timestep) {
-                step = [&](Fragment&& frag) {
+        else if constexpr (Solver == ODEsolver::RK4) {
+            if constexpr (StepSize == StepSizeBehaviour::Constant) {
+                return [df](Fragment&& frag) {
                     const auto dt = frag.dt_prev();
                     auto result = fcm::RK4(std::move(frag), df, dt);
                     result.advance_time(dt);
                     return result;
                 };
             } else {
-                step = [&](Fragment&& frag){
+                return [df, params, settings](Fragment&& frag) {
                     auto dt = frag.dt_next();
                     while (true) {
                         auto result = fcm::RK4(frag, df, dt);
@@ -363,11 +357,10 @@ std::pair<
                     }
                 };
             }
-            break;
-        }
-        case ODEsolver::AB2: {
-            if (settings.fixed_timestep) {
-                step = [&](Fragment&& frag) {
+        } else {
+            static_assert(Solver == ODEsolver::AB2);
+            if constexpr (StepSize == StepSizeBehaviour::Constant) {
+                return [df](Fragment&& frag) -> Fragment {
                     const auto dt = frag.dt_prev();
                     const auto df_prev = frag.df_prev();
                     auto [result, df_current] = fcm::AB2(std::move(frag), std::move(df_prev), df, dt, dt);
@@ -375,7 +368,7 @@ std::pair<
                     return result;
                 };
             } else {
-                step = [&](Fragment&& frag){
+                return [df, params, settings](Fragment&& frag) -> Fragment {
                     auto dt = frag.dt_next();
                     while (true) {
                         auto [result, df_current] = fcm::AB2(frag, frag.df_prev(), df, dt, frag.dt_prev());
@@ -392,11 +385,26 @@ std::pair<
                     }
                 };
             }
-            break;
         }
-        default:
-            throw std::invalid_argument("Invalid ODE solver");
-    }
+    }();
+
+    return _solve_fragment(std::move(fragment), z_start, z_ground, calculate_dEdz,
+                           params, settings, df, step);
+}
+
+std::pair<
+    std::vector<double>,
+    std::list<std::pair<
+        FragmentInfo,
+        std::list<std::array<double, data_size>>
+    >>
+> fcm::solve_entry(const Meteoroid& impactor, const double z_start, const double z_ground,
+                   const AtmosphericDensity& rho_a, const FCM_params& params, 
+                   const FCM_settings& settings, const bool calculate_dEdz, const id_type seed) {
+
+    if (z_start <= 0) throw std::invalid_argument("z_start must be > 0");
+    if (z_start <= z_ground) throw std::invalid_argument("z_start must be > z_ground");
+    if (z_ground <= -params.Rp) throw std::invalid_argument("z_ground must be > -Rp");   
 
     std::list<SubFragment> impactor_structure;
     for (const auto& group : impactor.structural_groups) {
@@ -422,9 +430,55 @@ std::pair<
                             seed, std::move(impactor_structure)));
 
     while (!fragments.empty()) {
-        auto [info, dEdz_fragment, timeseries, daughter_fragments] = _solve_fragment(
-            std::move(fragments.top()), z_start, z_ground, calculate_dEdz, params, settings, df, step
-        );
+        auto [info, dEdz_fragment, timeseries, daughter_fragments] = [&fragments, z_start, z_ground, calculate_dEdz, params, settings](){
+            switch (settings.ode_solver) {
+                case ODEsolver::forwardEuler: {
+                    if (settings.fixed_timestep) {
+                        return _define_solver_and_solve_fragment<ODEsolver::forwardEuler, StepSizeBehaviour::Constant> (
+                            std::move(fragments.top()), z_start, z_ground, calculate_dEdz, params, settings
+                        );
+                    } else {
+                        return _define_solver_and_solve_fragment<ODEsolver::forwardEuler, StepSizeBehaviour::Adaptive> (
+                            std::move(fragments.top()), z_start, z_ground, calculate_dEdz, params, settings
+                        );
+                    }
+                }
+                case ODEsolver::improvedEuler: {
+                    if (settings.fixed_timestep) {
+                        return _define_solver_and_solve_fragment<ODEsolver::improvedEuler, StepSizeBehaviour::Constant> (
+                            std::move(fragments.top()), z_start, z_ground, calculate_dEdz, params, settings
+                        );
+                    } else {
+                        return _define_solver_and_solve_fragment<ODEsolver::improvedEuler, StepSizeBehaviour::Adaptive> (
+                            std::move(fragments.top()), z_start, z_ground, calculate_dEdz, params, settings
+                        );
+                    }
+                }
+                case ODEsolver::RK4: {
+                    if (settings.fixed_timestep) {
+                        return _define_solver_and_solve_fragment<ODEsolver::RK4, StepSizeBehaviour::Constant> (
+                            std::move(fragments.top()), z_start, z_ground, calculate_dEdz, params, settings
+                        );
+                    } else {
+                        return _define_solver_and_solve_fragment<ODEsolver::RK4, StepSizeBehaviour::Adaptive> (
+                            std::move(fragments.top()), z_start, z_ground, calculate_dEdz, params, settings
+                        );
+                    }
+                }
+                case ODEsolver::AB2: {
+                    if (settings.fixed_timestep) {
+                        return _define_solver_and_solve_fragment<ODEsolver::AB2, StepSizeBehaviour::Constant> (
+                            std::move(fragments.top()), z_start, z_ground, calculate_dEdz, params, settings
+                        );
+                    } else {
+                        return _define_solver_and_solve_fragment<ODEsolver::AB2, StepSizeBehaviour::Adaptive> (
+                            std::move(fragments.top()), z_start, z_ground, calculate_dEdz, params, settings
+                        );
+                    }
+                }
+            }
+        }();
+
         fragments.pop();
         for (auto& fragment : daughter_fragments) {
             fragments.push(std::move(fragment));
@@ -439,7 +493,7 @@ std::pair<
         }
     }
 
-    return std::make_pair(dEdz, solutions);
+    return std::pair(dEdz, solutions);
 }
 
 inline auto _dist(const Crater& c1, const Crater& c2) {
