@@ -1,5 +1,7 @@
 # Fragment-Cloud Model
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.6806015.svg)](https://doi.org/10.5281/zenodo.6806015)
+
 ## Overview
 
 Implementation of the fragment-cloud model (FCM) for meteoroid atmospheric entry modeling.
