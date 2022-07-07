@@ -1,0 +1,17 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+- family-names: "Schwarz"
+  given-names: "Dominic"
+- family-names: "Collins"
+  given-names: "Gareth S."
+  orcid: "https://orcid.org/0000-0002-6087-6149"
+- family-names: "Newland"
+  given-names: "Eric L."
+- family-names: "Coleman"
+  given-names: "Matthew"
+title: "Fragment-Cloud Model"
+version: 1.0
+doi: 10.5281/zenodo.6806015
+date-released: 2022-07-07
+url: "https://github.com/ImperialCollegeLondon/fragment-cloud"
