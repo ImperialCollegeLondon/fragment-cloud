@@ -226,6 +226,8 @@ def ellipse_coleman(craters):
     '''calculates the best fit ellipse and aspect ratio
     the crater tools ellipse function cannot calculate aspect for clusters <6 craters >40 observations are 2-5 craters
     this function can calculate the ellipse for clusters of 2 craters or more'''
+
+    from matplotlib.patches import Circle, Ellipse
     
     x,y=craters['y'],craters['x']
     xy=craters[['y', 'x']]

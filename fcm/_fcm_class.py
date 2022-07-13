@@ -294,7 +294,7 @@ def default_cratering_params(ground_type):
                                mu=0.4, nu=1/3, rim_factor=1.3)
         
     if gt is GroundType.hard_soil:
-        return CrateringParams(ground_density=2.1e3, ground_strength=1.3e2, K1=0.04, K2=1.0, Kr=1.1,
+        return CrateringParams(ground_density=2.1e3, ground_strength=3.e3, K1=0.15, K2=1.0, Kr=1.1,
                                mu=0.55, nu=1/3, rim_factor=1.3)
     
     if gt is GroundType.cohesionless_material:
